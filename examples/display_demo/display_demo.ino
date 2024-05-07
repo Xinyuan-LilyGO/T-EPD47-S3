@@ -81,14 +81,18 @@ int transmissionState = RADIOLIB_ERR_NONE;
 #include "settings.h"
 
 #define DISP_BUF_SIZE (EPD_WIDTH*EPD_HEIGHT)
-
-double gamma_value = 0.9;
-uint8_t gamme_curve[256] = { 0 };
 uint8_t *decodebuffer = NULL;
 
-volatile bool disp_flush_enabled = false;
-lv_timer_t *disp_refr_time = NULL;
-int disp_refr_is_busy = 0;
+volatile bool disp_flush_enabled = true;
+bool disp_refr_is_busy = false;
+
+int mapTo1Byte(uint8_t* data) {
+    uint8_t byte = 0;
+    for (int i = 0; i < 4; i++) {
+        byte ^= *(data + i);
+    }
+    return byte;
+}
 
 void disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
@@ -98,9 +102,8 @@ void disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
         // uint32_t gray = 0;
         int i=0, j=0;
         uint8_t *c  = (uint8_t *)color_p;
+        lv_color32_t *t = (lv_color32_t *)color_p;
 
-        // epd_poweron();
-        epd_clear();
 #if LV_COLOR_DEPTH == 8
         for(i = 0; i < (w * h) / 2; i++) {
             uint8_t t1 = 0, t2 = 0, tmp = 0;
@@ -112,25 +115,25 @@ void disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
         }
 #elif LV_COLOR_DEPTH == 16
         for(i = 0; i < (w * h) / 2; i++) {
-            uint8_t tmp = 0;
-            tmp |= (c[j + 0] << 6) & 0xC0;
-            tmp |= (c[j + 1] << 4) & 0x30;
-            tmp |= (c[j + 2] << 2) & 0x0C;
-            tmp |= (c[j + 3] << 0) & 0x03;
-            c[i] = tmp;
-            j += 4;
+            // uint8_t tmp = 0;
+            // tmp |= (c[j + 0] << 6) & 0xC0;
+            // tmp |= (c[j + 1] << 4) & 0x30;
+            // tmp |= (c[j + 2] << 2) & 0x0C;
+            // tmp |= (c[j + 3] << 0) & 0x03;
+            // decodebuffer[i] = tmp;
+            // j += 4;
+            decodebuffer[i] = t->ch.green;
+            t++;
         }
 #elif LV_COLOR_DEPTH == 32
-        for (y = area->y1; y <= area->y2; y++) {
-            for (x = area->x1; x <= area->x2; x++) {
+        for (int y = area->y1; y <= area->y2; y++) {
+            for (int x = area->x1; x <= area->x2; x++) {
                 uint8_t gray = (color_p->ch.red * 38 + color_p->ch.green * 75 + color_p->ch.blue * 15) >> 7;
 
                 color_p++;
             }
         }
 #endif
-        epd_draw_image(epd_full_screen(), (uint8_t *)c, BLACK_ON_WHITE);
-        disp_flush_enabled = false;
         Serial.printf("dips x=%d, y=%d, w=%d, h=%d\n", area->x1, area->y1, w, h);
     }
     /* Inform the graphics library that you are ready with the flushing */
@@ -139,33 +142,20 @@ void disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 
 void disp_refrensh_cb(lv_timer_t *t)
 {
-    lv_obj_invalidate(lv_scr_act());
-    disp_flush_enabled = true;
     lv_timer_del(t);
     disp_refr_is_busy = false;
+
+    epd_clear();
+    epd_draw_image(epd_full_screen(), (uint8_t *)decodebuffer, BLACK_ON_WHITE);
+    epd_poweroff();
 }
 
 void disp_manual_refr(void)
 {
-    lv_obj_invalidate(lv_scr_act());
-    disp_flush_enabled = true;
-    disp_refr_time = lv_timer_create(disp_refrensh_cb, 200, NULL);
-    disp_refr_is_busy = 1;
-}
-
-void disp_monitor_cb(lv_disp_drv_t * drv, uint32_t time, uint32_t px)
-{
-    // LV_UNUSED(drv);
-    // LV_UNUSED(px);
-
-    // static int monitor_cnt = 0;
-    // Serial.printf("disp_monitor_cb: %d %d\n", monitor_cnt++, time);
-
-    // if(disp_refr_is_busy == 0) {
-    //     disp_refr_time = lv_timer_create(disp_refrensh_cb, time * 2, NULL);
-    //     disp_refr_is_busy = 1;
-    // }
-    
+    if(disp_refr_is_busy == false) {
+        lv_timer_create(disp_refrensh_cb, 200, NULL);
+        disp_refr_is_busy = true;
+    }
 }
 
 void my_input_read(lv_indev_drv_t * drv, lv_indev_data_t*data)
@@ -189,9 +179,13 @@ void lv_port_disp_init(void)
 
     static lv_disp_draw_buf_t draw_buf;
 
+    // lv_color_t *lv_disp_buf_p = (lv_color_t *)ps_calloc(sizeof(lv_color_t), DISP_BUF_SIZE);
+    // lv_color_t *lv_disp_buf_p1 = (lv_color_t *)ps_calloc(sizeof(lv_color_t), DISP_BUF_SIZE);
+    // lv_disp_draw_buf_init(&draw_buf, lv_disp_buf_p, lv_disp_buf_p1, DISP_BUF_SIZE);
+
     lv_color_t *lv_disp_buf_p = (lv_color_t *)ps_calloc(sizeof(lv_color_t), DISP_BUF_SIZE);
-    lv_color_t *lv_disp_buf_p1 = (lv_color_t *)ps_calloc(sizeof(lv_color_t), DISP_BUF_SIZE);
-    lv_disp_draw_buf_init(&draw_buf, lv_disp_buf_p, lv_disp_buf_p1, DISP_BUF_SIZE);
+    decodebuffer = (uint8_t *)ps_calloc(sizeof(uint8_t), DISP_BUF_SIZE);
+    lv_disp_draw_buf_init(&draw_buf, lv_disp_buf_p, NULL, DISP_BUF_SIZE);
 
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
@@ -199,7 +193,6 @@ void lv_port_disp_init(void)
     disp_drv.ver_res = EPD_HEIGHT;
     disp_drv.flush_cb = disp_flush;
     disp_drv.draw_buf = &draw_buf;
-    disp_drv.monitor_cb = disp_monitor_cb;
     disp_drv.full_refresh = 1;
     lv_disp_drv_register(&disp_drv);
 
@@ -210,7 +203,6 @@ void lv_port_disp_init(void)
     /*Register the driver in LVGL and save the created input device object*/
     // static lv_indev_t * my_indev = lv_indev_drv_register(&indev_drv);
     lv_indev_drv_register(&indev_drv);
-
 }
 #endif
 
@@ -241,7 +233,8 @@ void setup()
     // }
 
     // RTC
-    Wire.begin(BOARD_SDA, BOARD_SCL);
+    
+
     Wire.beginTransmission(PCF8563_SLAVE_ADDRESS);
     if (Wire.endTransmission() == 0)
     {
@@ -250,6 +243,17 @@ void setup()
     }
 
     // TOUCH
+    byte error, address;
+    int nDevices = 0;
+    Wire.begin(BOARD_SDA, BOARD_SCL);
+    for(address = 0x01; address < 0x7F; address++){
+        Wire.beginTransmission(address);
+        error = Wire.endTransmission();
+        if(error == 0){ // 0: success.
+            nDevices++;
+            Serial.printf("I2C device found at address 0x%x\n", address);
+        }
+    }
     uint8_t touchAddress = 0x14;
     Wire.beginTransmission(0x5D);
     if (Wire.endTransmission() == 0)
@@ -264,14 +268,20 @@ void setup()
         touch.setSwapXY(true);
         touch.setMirrorXY(false, true);
         touchOnline = true;
+        Serial.printf("touchOnline \n");
     }
+
+    Serial.printf("Touch init %s\n", touchOnline? "PASS" : "FAIL");
+    Serial.printf("SD card init %s\n", sd_is_init? "PASS" : "FAIL");
+    Serial.printf("RTC init %s\n", rtc_is_init? "PASS" : "FAIL");
+    Serial.printf("LORA init %s\n", lora_is_init? "PASS" : "FAIL");
 
     lv_port_disp_init();
     epd_poweron();
-    epd_clear();
+    // epd_clear();
     
-    settings_ui();
-    //  ui_entry();
+    // settings_ui();
+     ui_epd47_entry();
      disp_manual_refr();
 }
 

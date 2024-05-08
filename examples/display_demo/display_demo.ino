@@ -18,8 +18,6 @@
 
 #define USED_EPD_LVGL 1
 
-
-
 #define WIFI_SSID "Your WiFi SSID"
 #define WIFI_PASSWORD "Your WiFi PASSWORD"
 
@@ -51,7 +49,17 @@ bool rtc_is_init = false;
 bool lora_is_init = false;
 bool touchOnline = false;
 
-int curr_page = 0;
+// wifi
+// char wifi_ssid[WIFI_SSID_MAX_LEN] = "xinyuandianzi";
+// char wifi_password[WIFI_PSWD_MAX_LEN] = "AA15994823428";
+const char *wifi_ssid = "xinyuandianzi";
+const char *wifi_password = "AA15994823428";
+const char *ntpServer1 = "pool.ntp.org";
+const char* ntpServer2 = "time.nist.gov";
+static uint32_t last_tick;
+bool wifi_is_connect = false;
+struct tm timeinfo = {0};
+
 int touch_press = 0;
 int touch_cnt = 0;
 int16_t touch_x, touch_y;
@@ -134,7 +142,7 @@ void disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
             }
         }
 #endif
-        Serial.printf("dips x=%d, y=%d, w=%d, h=%d\n", area->x1, area->y1, w, h);
+        // Serial.printf("dips x=%d, y=%d, w=%d, h=%d\n", area->x1, area->y1, w, h);
     }
     /* Inform the graphics library that you are ready with the flushing */
     lv_disp_flush_ready(disp);
@@ -145,6 +153,7 @@ void disp_refrensh_cb(lv_timer_t *t)
     lv_timer_del(t);
     disp_refr_is_busy = false;
 
+    epd_poweron();
     epd_clear();
     epd_draw_image(epd_full_screen(), (uint8_t *)decodebuffer, BLACK_ON_WHITE);
     epd_poweroff();
@@ -206,6 +215,51 @@ void lv_port_disp_init(void)
 }
 #endif
 
+static void get_curr_time(lv_timer_t *t)
+{
+    if(wifi_is_connect == true){
+        if (!getLocalTime(&timeinfo)){
+            Serial.println("Failed to obtain time");
+            return;
+        }
+        // Serial.println(&timeinfo, "%F %T %A"); // 格式化输出
+        // timeinfo.tm_hour = timeinfo.tm_hour % 12;
+        // lv_msg_send(MSG_CLOCK_HOUR, &timeinfo.tm_hour);
+        // lv_msg_send(MSG_CLOCK_MINUTE, &timeinfo.tm_min);
+        // lv_msg_send(MSG_CLOCK_SECOND, &timeinfo.tm_sec);
+    }
+}
+
+
+void wifi_init(void)
+{
+    Serial.printf("SSID len: %d\n", strlen(wifi_ssid));
+    Serial.printf("PWSD len: %d\n", strlen(wifi_password));
+    if(strlen(wifi_ssid) == 0 || strlen(wifi_password) == 0) {
+        return;
+    }
+
+    WiFi.begin(wifi_ssid, wifi_password);
+    wl_status_t wifi_state = WiFi.status();
+    last_tick = millis();
+    while (wifi_state != WL_CONNECTED){
+        delay(500);
+        Serial.print(".");
+        wifi_state = WiFi.status();
+        if(wifi_state == WL_CONNECTED){
+            wifi_is_connect = true;
+            Serial.println("WiFi connected!");
+            configTime(8 * 3600, 0, ntpServer1, ntpServer2);
+            break;
+        }
+        if (millis() - last_tick > 5000) {
+            Serial.println("WiFi connected falied!");
+            last_tick = millis();
+            break;
+        }
+    }
+}
+
 
 void setup()
 {
@@ -213,6 +267,8 @@ void setup()
 
     pinMode(BL_EN, OUTPUT);
     analogWrite(BL_EN, 0);
+
+    wifi_init();
 
     epd_init();
 
@@ -232,17 +288,6 @@ void setup()
     //     lora_is_init = false;
     // }
 
-    // RTC
-    
-
-    Wire.beginTransmission(PCF8563_SLAVE_ADDRESS);
-    if (Wire.endTransmission() == 0)
-    {
-        rtc.begin(Wire, PCF8563_SLAVE_ADDRESS, BOARD_SDA, BOARD_SCL);
-        rtc_is_init = true;
-    }
-
-    // TOUCH
     byte error, address;
     int nDevices = 0;
     Wire.begin(BOARD_SDA, BOARD_SCL);
@@ -254,6 +299,16 @@ void setup()
             Serial.printf("I2C device found at address 0x%x\n", address);
         }
     }
+
+    // RTC
+    Wire.beginTransmission(PCF8563_SLAVE_ADDRESS);
+    if (Wire.endTransmission() == 0)
+    {
+        rtc.begin(Wire, PCF8563_SLAVE_ADDRESS, BOARD_SDA, BOARD_SCL);
+        rtc_is_init = true;
+    }
+
+    // TOUCH
     uint8_t touchAddress = 0x14;
     Wire.beginTransmission(0x5D);
     if (Wire.endTransmission() == 0)
@@ -277,54 +332,17 @@ void setup()
     Serial.printf("LORA init %s\n", lora_is_init? "PASS" : "FAIL");
 
     lv_port_disp_init();
-    epd_poweron();
+    // epd_poweron();
     // epd_clear();
     
-    // settings_ui();
-     ui_epd47_entry();
-     disp_manual_refr();
+    ui_epd47_entry();
+    disp_manual_refr();
+
+    lv_timer_create(get_curr_time, 5000, NULL);
 }
 
 void loop()
 {
-#if USED_EPD_LVGL
     lv_task_handler();
-#else
-    if (curr_page < DISPLAY_MAX_PAGE)
-    {
-        switch (curr_page)
-        {
-            case 0: page1_loop(); break;
-            case 1: page2_loop(); break;
-            default:
-                break;
-        }
-    }
-
-    if (touchOnline)
-    {
-        touch_press = touch.getPoint(&touch_x, &touch_y);
-
-        if(touch_press) {
-            Serial.printf("touch X:%d Y:%d\n", touch_x, touch_y);
-        }
-
-        _point btn[2] = {
-            {0, 0, 240, 100, 100},               // LEFT BTN
-            {1, EPD_WIDTH - 100, 240, 100, 100}, // RIGHT BTN
-        };
-
-        AREA_EVENT(btn, touch_x, touch_y)
-        AREA_CASE(0){
-            page_switch(curr_page, '-');
-            break;
-        }
-        AREA_CASE(1){
-            page_switch(curr_page, '+');
-            break;
-        }
-        AREA_END;
-    }
-#endif
     delay(1);
 }

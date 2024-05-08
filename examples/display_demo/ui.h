@@ -44,5 +44,14 @@ enum {
  *                              GLOBAL PROTOTYPES
  * *******************************************************************************/
 void ui_epd47_entry(void);
+// week fun (ui interface)
+void ui_if_epd_refr(void);
+void ui_if_epd_get_time(uint8_t *h, uint8_t *m, uint8_t *s);
+void ui_if_epd_get_data(uint8_t *year, uint8_t *month, uint8_t *day, uint8_t *week);
 
+
+bool ui_if_epd_get_SD(void);
+bool ui_if_epd_get_RTC(void);
+bool ui_if_epd_get_TOUCH(void);
+bool ui_if_epd_get_LORA(void);
 #endif /* __UI_EPD47H__ */

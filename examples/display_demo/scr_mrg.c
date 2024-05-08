@@ -109,7 +109,7 @@ void scr_mgr_init(void)
 bool scr_mgr_register(int id, scr_lifecycle_t *card_life) // 注册一个屏幕卡片 
 {
     if(scr_mgr_find_by_id(id)){
-        printf("scr already registered\n");
+        // printf("scr already registered\n");
         return false;
     }
 

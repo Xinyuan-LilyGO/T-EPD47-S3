@@ -2,7 +2,9 @@
     "idf.adapterTargetName": "esp32s3",
     "files.associations": {
         "*.projbuild": "cmake",
-        "epd_board.h": "c"
+        "epd_board.h": "c",
+        "*.tpp": "cpp",
+        "lvgl.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

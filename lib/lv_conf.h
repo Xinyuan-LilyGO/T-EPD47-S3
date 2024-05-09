@@ -46,7 +46,7 @@
  *=========================*/
 
 /*1: use custom malloc/free, 0: use the built-in `lv_mem_alloc()` and `lv_mem_free()`*/
-#define LV_MEM_CUSTOM 0
+#define LV_MEM_CUSTOM 1
 #if LV_MEM_CUSTOM == 0
     /*Size of the memory available for `lv_mem_alloc()` in bytes (>= 2kB)*/
     #define LV_MEM_SIZE (48U * 1024U)          /*[bytes]*/
@@ -60,10 +60,10 @@
     #endif
 
 #else       /*LV_MEM_CUSTOM*/
-    #define LV_MEM_CUSTOM_INCLUDE <stdlib.h>   /*Header for the dynamic memory function*/
-    #define LV_MEM_CUSTOM_ALLOC   malloc
-    #define LV_MEM_CUSTOM_FREE    free
-    #define LV_MEM_CUSTOM_REALLOC realloc
+#define LV_MEM_CUSTOM_INCLUDE "esp32-hal-psram.h"//<stdlib.h>   /*Header for the dynamic memory function*/
+#define LV_MEM_CUSTOM_ALLOC   ps_malloc
+#define LV_MEM_CUSTOM_FREE    free
+#define LV_MEM_CUSTOM_REALLOC ps_realloc
 #endif     /*LV_MEM_CUSTOM*/
 
 /*Number of the intermediate memory buffer used during rendering and other internal processing mechanisms.
@@ -633,27 +633,27 @@
 #endif
 
 /*API for FATFS (needs to be added separately). Uses f_open, f_read, etc*/
-#define LV_USE_FS_FATFS 0
+#define LV_USE_FS_FATFS 1
 #if LV_USE_FS_FATFS
-    #define LV_FS_FATFS_LETTER '\0'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
+    #define LV_FS_FATFS_LETTER 'S'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
     #define LV_FS_FATFS_CACHE_SIZE 0    /*>0 to cache this number of bytes in lv_fs_read()*/
 #endif
 
 /*PNG decoder library*/
-#define LV_USE_PNG 0
+#define LV_USE_PNG 1
 
 /*BMP decoder library*/
-#define LV_USE_BMP 0
+#define LV_USE_BMP 1
 
 /* JPG + split JPG decoder library.
  * Split JPG is a custom format optimized for embedded systems. */
-#define LV_USE_SJPG 0
+#define LV_USE_SJPG 1
 
 /*GIF decoder library*/
-#define LV_USE_GIF 0
+#define LV_USE_GIF 1
 
 /*QR code library*/
-#define LV_USE_QRCODE 0
+#define LV_USE_QRCODE 1
 
 /*FreeType library*/
 #define LV_USE_FREETYPE 0
@@ -703,7 +703,7 @@
 #define LV_USE_IMGFONT 0
 
 /*1: Enable a published subscriber based messaging system */
-#define LV_USE_MSG 0
+#define LV_USE_MSG 1
 
 /*1: Enable Pinyin input method*/
 /*Requires: lv_keyboard*/
@@ -728,7 +728,7 @@
 *==================*/
 
 /*Enable the examples to be built with the library*/
-#define LV_BUILD_EXAMPLES 1
+#define LV_BUILD_EXAMPLES 0
 
 /*===================
  * DEMO USAGE

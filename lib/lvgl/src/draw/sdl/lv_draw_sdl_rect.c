@@ -175,7 +175,7 @@ void lv_draw_sdl_draw_rect(lv_draw_ctx_t * draw_ctx, const lv_draw_rect_dsc_t * 
     lv_draw_sdl_composite_end(ctx, &apply_area, dsc->blend_mode);
 }
 
-SDL_Texture * lv_draw_sdl_rect_bg_frag_obtain(lv_draw_sdl_ctx_t * ctx, lv_coord_t radius, bool * in_cache)
+SDL_Texture * lv_draw_sdl_rect_bg_frag_obtain(lv_draw_sdl_ctx_t * ctx, lv_coord_t radius)
 {
     lv_draw_rect_bg_key_t key = rect_bg_key_create(radius, radius);
     SDL_Texture * texture = lv_draw_sdl_texture_cache_get(ctx, &key, sizeof(key), NULL);
@@ -188,16 +188,13 @@ SDL_Texture * lv_draw_sdl_rect_bg_frag_obtain(lv_draw_sdl_ctx_t * ctx, lv_coord_
         texture = lv_draw_sdl_mask_dump_texture(ctx->renderer, &coords_frag, &mask_id, 1);
         SDL_assert(texture != NULL);
         lv_draw_mask_remove_id(mask_id);
-        *in_cache = lv_draw_sdl_texture_cache_put(ctx, &key, sizeof(key), texture);
-    }
-    else {
-        *in_cache = true;
+        lv_draw_sdl_texture_cache_put(ctx, &key, sizeof(key), texture);
     }
     return texture;
 }
 
 SDL_Texture * lv_draw_sdl_rect_grad_frag_obtain(lv_draw_sdl_ctx_t * ctx, const lv_grad_dsc_t * grad, lv_coord_t w,
-                                                lv_coord_t h, lv_coord_t radius, bool * in_cache)
+                                                lv_coord_t h, lv_coord_t radius)
 {
     lv_draw_rect_grad_frag_key_t key = rect_grad_frag_key_create(grad, w, h, radius);
     SDL_Texture * texture = lv_draw_sdl_texture_cache_get(ctx, &key, sizeof(key), NULL);
@@ -243,15 +240,12 @@ SDL_Texture * lv_draw_sdl_rect_grad_frag_obtain(lv_draw_sdl_ctx_t * ctx, const l
         draw_bg_grad_simple(ctx, &blend_coords, &draw_area, grad, true);
 
         SDL_SetRenderTarget(ctx->renderer, target_backup);
-        *in_cache = lv_draw_sdl_texture_cache_put(ctx, &key, sizeof(key), texture);
-    }
-    else {
-        *in_cache = true;
+        lv_draw_sdl_texture_cache_put(ctx, &key, sizeof(key), texture);
     }
     return texture;
 }
 
-SDL_Texture * lv_draw_sdl_rect_grad_strip_obtain(lv_draw_sdl_ctx_t * ctx, const lv_grad_dsc_t * grad, bool * in_cache)
+SDL_Texture * lv_draw_sdl_rect_grad_strip_obtain(lv_draw_sdl_ctx_t * ctx, const lv_grad_dsc_t * grad)
 {
     lv_draw_rect_grad_strip_key_t key = rect_grad_strip_key_create(grad);
     SDL_Texture * texture = lv_draw_sdl_texture_cache_get(ctx, &key, sizeof(key), NULL);
@@ -271,10 +265,7 @@ SDL_Texture * lv_draw_sdl_rect_grad_strip_obtain(lv_draw_sdl_ctx_t * ctx, const 
         texture = SDL_CreateTextureFromSurface(ctx->renderer, surface);
         SDL_assert(texture != NULL);
         SDL_FreeSurface(surface);
-        *in_cache = lv_draw_sdl_texture_cache_put(ctx, &key, sizeof(key), texture);
-    }
-    else {
-        *in_cache = true;
+        lv_draw_sdl_texture_cache_put(ctx, &key, sizeof(key), texture);
     }
     return texture;
 }
@@ -397,8 +388,7 @@ static void draw_bg_color(lv_draw_sdl_ctx_t * ctx, const lv_area_t * coords, con
     /*A small texture with a quarter of the rect is enough*/
     lv_coord_t bg_w = lv_area_get_width(coords), bg_h = lv_area_get_height(coords);
     lv_coord_t real_radius = LV_MIN3(bg_w / 2, bg_h / 2, radius);
-    bool texture_in_cache = false;
-    SDL_Texture * texture = lv_draw_sdl_rect_bg_frag_obtain(ctx, real_radius, &texture_in_cache);
+    SDL_Texture * texture = lv_draw_sdl_rect_bg_frag_obtain(ctx, real_radius);
 
     SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
     SDL_SetTextureAlphaMod(texture, dsc->bg_opa);
@@ -406,11 +396,6 @@ static void draw_bg_color(lv_draw_sdl_ctx_t * ctx, const lv_area_t * coords, con
     lv_draw_sdl_rect_bg_frag_draw_corners(ctx, texture, real_radius, coords, draw_area, false);
     frag_render_borders(ctx->renderer, texture, real_radius, coords, draw_area, false);
     frag_render_center(ctx->renderer, texture, real_radius, coords, draw_area, false);
-
-    if(!texture_in_cache) {
-        LV_LOG_WARN("Texture is not cached, this will impact performance.");
-        SDL_DestroyTexture(texture);
-    }
 }
 
 static void draw_bg_grad_simple(lv_draw_sdl_ctx_t * ctx, const lv_area_t * coords, const lv_area_t * draw_area,
@@ -442,8 +427,7 @@ static void draw_bg_grad_simple(lv_draw_sdl_ctx_t * ctx, const lv_area_t * coord
         }
     }
 
-    bool grad_texture_in_cache = false;
-    SDL_Texture * grad_texture = lv_draw_sdl_rect_grad_strip_obtain(ctx, grad, &grad_texture_in_cache);
+    SDL_Texture * grad_texture = lv_draw_sdl_rect_grad_strip_obtain(ctx, grad);
     if(blend_mod) {
         SDL_SetTextureBlendMode(grad_texture, SDL_BLENDMODE_MOD);
     }
@@ -452,11 +436,6 @@ static void draw_bg_grad_simple(lv_draw_sdl_ctx_t * ctx, const lv_area_t * coord
     }
 
     SDL_RenderCopy(ctx->renderer, grad_texture, &srcrect, &dstrect);
-
-    if(!grad_texture_in_cache) {
-        LV_LOG_WARN("Texture is not cached, this will impact performance.");
-        SDL_DestroyTexture(grad_texture);
-    }
 }
 
 static void draw_bg_grad_radius(lv_draw_sdl_ctx_t * ctx, const lv_area_t * coords, const lv_area_t * draw_area,
@@ -466,9 +445,7 @@ static void draw_bg_grad_radius(lv_draw_sdl_ctx_t * ctx, const lv_area_t * coord
     /*A small texture with a quarter of the rect is enough*/
     lv_coord_t bg_w = lv_area_get_width(coords), bg_h = lv_area_get_height(coords);
     lv_coord_t real_radius = LV_MIN3(bg_w / 2, bg_h / 2, radius);
-    bool grad_texture_in_cache = false;
-    SDL_Texture * grad_texture = lv_draw_sdl_rect_grad_frag_obtain(ctx, &dsc->bg_grad, bg_w, bg_h, radius,
-                                                                   &grad_texture_in_cache);
+    SDL_Texture * grad_texture = lv_draw_sdl_rect_grad_frag_obtain(ctx, &dsc->bg_grad, bg_w, bg_h, radius);
     SDL_SetTextureBlendMode(grad_texture, SDL_BLENDMODE_BLEND);
 
     lv_draw_sdl_rect_bg_frag_draw_corners(ctx, grad_texture, real_radius, coords, draw_area, true);
@@ -519,11 +496,6 @@ static void draw_bg_grad_radius(lv_draw_sdl_ctx_t * ctx, const lv_area_t * coord
         lv_area_align(coords, &part_coords, LV_ALIGN_CENTER, 0, 0);
         _lv_area_intersect(&part_area, &part_coords, draw_area);
         draw_bg_grad_simple(ctx, coords, &part_area, &dsc->bg_grad, false);
-    }
-
-    if(!grad_texture_in_cache) {
-        LV_LOG_WARN("Texture is not cached, this will impact performance.");
-        SDL_DestroyTexture(grad_texture);
     }
 }
 
@@ -660,7 +632,6 @@ static void draw_shadow(lv_draw_sdl_ctx_t * ctx, const lv_area_t * coords, const
     lv_draw_rect_shadow_key_t key = rect_shadow_key_create(radius, frag_size, sw);
 
     SDL_Texture * texture = lv_draw_sdl_texture_cache_get(ctx, &key, sizeof(key), NULL);
-    bool texture_in_cache = false;
     if(texture == NULL) {
         lv_area_t mask_area = {blur_growth, blur_growth}, mask_area_blurred = {0, 0};
         lv_area_set_width(&mask_area, frag_size * 2);
@@ -679,10 +650,7 @@ static void draw_shadow(lv_draw_sdl_ctx_t * ctx, const lv_area_t * coords, const
         lv_mem_buf_release(mask_buf);
         lv_draw_mask_remove_id(mask_id);
         SDL_assert(texture);
-        texture_in_cache = lv_draw_sdl_texture_cache_put(ctx, &key, sizeof(key), texture);
-    }
-    else {
-        texture_in_cache = true;
+        lv_draw_sdl_texture_cache_put(ctx, &key, sizeof(key), texture);
     }
 
     SDL_Color shadow_color;
@@ -694,11 +662,6 @@ static void draw_shadow(lv_draw_sdl_ctx_t * ctx, const lv_area_t * coords, const
     lv_draw_sdl_rect_bg_frag_draw_corners(ctx, texture, blur_frag_size, &shadow_area, clip, false);
     frag_render_borders(ctx->renderer, texture, blur_frag_size, &shadow_area, clip, false);
     frag_render_center(ctx->renderer, texture, blur_frag_size, &shadow_area, clip, false);
-
-    if(!texture_in_cache) {
-        LV_LOG_WARN("Texture is not cached, this will impact performance.");
-        SDL_DestroyTexture(texture);
-    }
 }
 
 
@@ -780,7 +743,6 @@ static void draw_border_generic(lv_draw_sdl_ctx_t * ctx, const lv_area_t * outer
     lv_coord_t max_side = LV_MAX4(key.offsets.x1, key.offsets.y1, -key.offsets.x2, -key.offsets.y2);
     lv_coord_t frag_size = LV_MAX(radius, max_side);
     SDL_Texture * texture = lv_draw_sdl_texture_cache_get(ctx, &key, sizeof(key), NULL);
-    bool texture_in_cache;
     if(texture == NULL) {
         /* Create a mask texture with size of (frag_size * 2 + FRAG_SPACING) */
         const lv_area_t frag_area = {0, 0, frag_size * 2 + FRAG_SPACING - 1, frag_size * 2 + FRAG_SPACING - 1};
@@ -807,10 +769,7 @@ static void draw_border_generic(lv_draw_sdl_ctx_t * ctx, const lv_area_t * outer
         lv_draw_mask_remove_id(mask_ids[1]);
         lv_draw_mask_remove_id(mask_ids[0]);
         SDL_assert(texture);
-        texture_in_cache = lv_draw_sdl_texture_cache_put(ctx, &key, sizeof(key), texture);
-    }
-    else {
-        texture_in_cache = true;
+        lv_draw_sdl_texture_cache_put(ctx, &key, sizeof(key), texture);
     }
 
     SDL_Rect outer_rect;
@@ -824,11 +783,6 @@ static void draw_border_generic(lv_draw_sdl_ctx_t * ctx, const lv_area_t * outer
 
     lv_draw_sdl_rect_bg_frag_draw_corners(ctx, texture, frag_size, outer_area, clip, true);
     frag_render_borders(renderer, texture, frag_size, outer_area, clip, true);
-
-    if(!texture_in_cache) {
-        LV_LOG_WARN("Texture is not cached, this will impact performance.");
-        SDL_DestroyTexture(texture);
-    }
 }
 
 static void frag_render_borders(SDL_Renderer * renderer, SDL_Texture * frag, lv_coord_t frag_size,

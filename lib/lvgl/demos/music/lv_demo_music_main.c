@@ -60,7 +60,7 @@ static void prev_click_event_cb(lv_event_t * e);
 static void next_click_event_cb(lv_event_t * e);
 static void timer_cb(lv_timer_t * t);
 static void track_load(uint32_t id);
-static void stop_start_anim_timer_cb(lv_timer_t * t);
+static void stop_start_anim(lv_timer_t * t);
 static void spectrum_end_cb(lv_anim_t * a);
 static void album_fade_anim_cb(void * var, int32_t v);
 static int32_t get_cos(int32_t deg, int32_t a);
@@ -84,7 +84,6 @@ static uint32_t spectrum_lane_ofs_start = 0;
 static uint32_t bar_rot = 0;
 static uint32_t time_act;
 static lv_timer_t  * sec_counter_timer;
-static lv_timer_t * stop_start_anim_timer;
 static const lv_font_t * font_small;
 static const lv_font_t * font_large;
 static uint32_t track_id;
@@ -233,8 +232,8 @@ lv_obj_t * _lv_demo_music_main_create(lv_obj_t * parent)
 
     start_anim = true;
 
-    stop_start_anim_timer = lv_timer_create(stop_start_anim_timer_cb, INTRO_TIME + 6000, NULL);
-    lv_timer_set_repeat_count(stop_start_anim_timer, 1);
+    lv_timer_t * timer = lv_timer_create(stop_start_anim, INTRO_TIME + 6000, NULL);
+    lv_timer_set_repeat_count(timer, 1);
 
     lv_anim_init(&a);
     lv_anim_set_path_cb(&a, lv_anim_path_bounce);
@@ -291,12 +290,6 @@ lv_obj_t * _lv_demo_music_main_create(lv_obj_t * parent)
     lv_obj_update_layout(main_cont);
 
     return main_cont;
-}
-
-void _lv_demo_music_main_close(void)
-{
-    if(stop_start_anim_timer) lv_timer_del(stop_start_anim_timer);
-    lv_timer_del(sec_counter_timer);
 }
 
 void _lv_demo_music_album_next(bool next)
@@ -769,7 +762,7 @@ static void spectrum_draw_event_cb(lv_event_t * e)
         lv_obj_t * obj = lv_event_get_target(e);
         lv_draw_ctx_t * draw_ctx = lv_event_get_draw_ctx(e);
 
-        lv_opa_t opa = lv_obj_get_style_opa_recursive(obj, LV_PART_MAIN);
+        lv_opa_t opa = lv_obj_get_style_opa(obj, LV_PART_MAIN);
         if(opa < LV_OPA_MIN) return;
 
         lv_point_t poly[4];
@@ -997,11 +990,10 @@ static void spectrum_end_cb(lv_anim_t * a)
 }
 
 
-static void stop_start_anim_timer_cb(lv_timer_t * t)
+static void stop_start_anim(lv_timer_t * t)
 {
     LV_UNUSED(t);
     start_anim = false;
-    stop_start_anim_timer = NULL;
     lv_obj_refresh_ext_draw_size(spectrum_obj);
 }
 

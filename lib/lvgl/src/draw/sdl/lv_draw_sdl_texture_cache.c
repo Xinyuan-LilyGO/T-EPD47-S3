@@ -81,12 +81,12 @@ SDL_Texture * lv_draw_sdl_texture_cache_get_with_userdata(lv_draw_sdl_ctx_t * ct
     return value->texture;
 }
 
-bool lv_draw_sdl_texture_cache_put(lv_draw_sdl_ctx_t * ctx, const void * key, size_t key_length, SDL_Texture * texture)
+void lv_draw_sdl_texture_cache_put(lv_draw_sdl_ctx_t * ctx, const void * key, size_t key_length, SDL_Texture * texture)
 {
-    return lv_draw_sdl_texture_cache_put_advanced(ctx, key, key_length, texture, NULL, NULL, 0);
+    lv_draw_sdl_texture_cache_put_advanced(ctx, key, key_length, texture, NULL, NULL, 0);
 }
 
-bool lv_draw_sdl_texture_cache_put_advanced(lv_draw_sdl_ctx_t * ctx, const void * key, size_t key_length,
+void lv_draw_sdl_texture_cache_put_advanced(lv_draw_sdl_ctx_t * ctx, const void * key, size_t key_length,
                                             SDL_Texture * texture, void * userdata, void userdata_free(void *),
                                             lv_draw_sdl_cache_flag_t flags)
 {
@@ -97,20 +97,22 @@ bool lv_draw_sdl_texture_cache_put_advanced(lv_draw_sdl_ctx_t * ctx, const void 
     value->userdata_free = userdata_free;
     value->flags = flags;
     if(!texture) {
-        return lv_lru_set(lru, key, key_length, value, 1) == LV_LRU_OK;
+        lv_lru_set(lru, key, key_length, value, 1);
+        return;
     }
     if(flags & LV_DRAW_SDL_CACHE_FLAG_MANAGED) {
         /* Managed texture doesn't count into cache size */
         LV_LOG_INFO("cache texture %p", texture);
-        return lv_lru_set(lru, key, key_length, value, 1) == LV_LRU_OK;
+        lv_lru_set(lru, key, key_length, value, 1);
+        return;
     }
     Uint32 format;
     int access, width, height;
     if(SDL_QueryTexture(texture, &format, &access, &width, &height) != 0) {
-        return false;
+        return;
     }
     LV_LOG_INFO("cache texture %p, %d*%d@%dbpp", texture, width, height, SDL_BITSPERPIXEL(format));
-    return lv_lru_set(lru, key, key_length, value, width * height * SDL_BITSPERPIXEL(format) / 8) == LV_LRU_OK;
+    lv_lru_set(lru, key, key_length, value, width * height * SDL_BITSPERPIXEL(format) / 8);
 }
 
 lv_draw_sdl_cache_key_head_img_t * lv_draw_sdl_texture_img_key_create(const void * src, int32_t frame_id, size_t * size)

@@ -31,7 +31,6 @@ void scr_back_btn_create(lv_obj_t *parent, const char *text, lv_event_cb_t cb)
 
 //************************************[ screen 0 ]****************************************** menu
 #if 1
-
 #define MENU_ICON_NUM  (6)
 #define MENU_CONT_HIGH (LCD_VER_SIZE * 0.80)
 
@@ -158,7 +157,6 @@ static lv_obj_t *clock_data;
 static lv_obj_t *clock_ap;
 static const char *week_list_en[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
-
 static void get_refresh_data(void)
 {
     uint8_t h, m, s;
@@ -176,7 +174,7 @@ static void get_refresh_data(void)
         lv_label_set_text_fmt(clock_ap, "%s", "A.M.");
     }
     
-    lv_meter_set_indicator_end_value(meter, indic_hour, h);
+    lv_meter_set_indicator_end_value(meter, indic_hour, h % 12);
     lv_meter_set_indicator_end_value(meter, indic_min, m);
 
     printf("%2d:%2d:%02d-%d/%d/%d\n", h, m, s, year, mont, day);
@@ -184,7 +182,6 @@ static void get_refresh_data(void)
 
 static void get_timer_event(lv_timer_t *t) 
 {
-    
     // refresh time
     get_refresh_data();
     ui_if_epd_refr();
@@ -227,7 +224,7 @@ static void create1(lv_obj_t *parent) {
     lv_meter_set_scale_range(meter, scale_hour, 1, 12, 330, 300);       /*[1..12] values in an almost full circle*/
 
     /*Add a the hands from images*/
-    indic_hour = lv_meter_add_needle_img(meter, scale_min, &img_hand, 5, 5);
+    indic_hour = lv_meter_add_needle_img(meter, scale_hour, &img_hand, 5, 5);
     indic_min = lv_meter_add_needle_img(meter, scale_min, &img_hand_sec, 5, 5);
 
     // refresh time
@@ -246,7 +243,7 @@ static void entry1(void) {
     lv_obj_set_style_text_align(clock_data, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_set_style_text_align(clock_ap, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_align(clock_time, LV_ALIGN_LEFT_MID, 80, -50);
-    lv_obj_align_to(clock_ap, clock_time, LV_ALIGN_OUT_RIGHT_MID, 0, 20);
+    lv_obj_align_to(clock_ap, clock_time, LV_ALIGN_OUT_RIGHT_MID, 5, 20);
     lv_obj_align_to(clock_data, clock_time, LV_ALIGN_OUT_BOTTOM_MID, 25, 30);
 }
 static void exit1(void) {
@@ -297,14 +294,50 @@ static scr_lifecycle_t screen2 = {
 #endif
 //************************************[ screen 3 ]****************************************** sd_card
 #if 1
+
 lv_obj_t *scr3_cont;
+lv_obj_t *scr3_imgcont = NULL;
+lv_obj_t *ui_photos_img = NULL;
+
+
+
+static void ui_photos_img_src_event(lv_event_t * e)
+{
+    lv_obj_del(scr3_imgcont);
+    scr3_imgcont = NULL;
+}
+
+static void imgcont_create(void)
+{
+    scr3_imgcont = lv_obj_create(NULL);
+    lv_obj_set_size(scr3_imgcont, lv_pct(100), lv_pct(100));
+    lv_obj_set_style_bg_color(scr3_imgcont, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_pad_all(scr3_imgcont, 0, 0);
+    lv_obj_set_style_radius(scr3_imgcont, 0, 0);
+    lv_obj_clear_flag(scr3_imgcont, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(scr3_imgcont, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(scr3_imgcont, ui_photos_img_src_event, LV_EVENT_CLICKED, NULL);
+
+    ui_photos_img = lv_img_create(scr3_imgcont);
+    lv_obj_center(ui_photos_img);
+    lv_obj_add_flag(ui_photos_img, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(ui_photos_img, ui_photos_img_src_event, LV_EVENT_CLICKED, NULL);
+}
 
 static void read_img_btn_event(lv_event_t * e)
 {
-    int data = (int)e->user_data;
+    char *file_name = lv_label_get_text((lv_obj_t *)e->user_data);
 
     if(e->code = LV_EVENT_CLICKED) {
-        printf("imgbtn %d\n", data);
+        
+        if(scr3_imgcont == NULL) {
+            static char path[32];
+            lv_snprintf(path, 32, "S:/%s", file_name);
+            lv_img_set_src(ui_photos_img, path);
+            printf("event [%s]\n", path);
+            // imgcont_create();
+        }
+        ui_if_epd_refr();
     }
 }
 
@@ -313,6 +346,82 @@ static void scr3_btn_event_cb(lv_event_t * e)
     if(e->code == LV_EVENT_CLICKED){
         ui_if_epd_refr();
         scr_mgr_pop(false);
+    }
+}
+
+static void scr3_add_img_btn(const char *text, int text_len, int type)
+{
+    char buf[16] = {0};
+    strncpy(buf, text, 16);
+    char *suffix = (char *)text + text_len - 4;
+    buf[text_len - 4] = '\0';
+
+    printf("imgbtn [%s][%d][%s]\n", text, text_len, suffix);
+
+    lv_obj_t *obj = lv_obj_create(scr3_cont);
+    lv_obj_set_size(obj, LCD_HOR_SIZE/9, LCD_HOR_SIZE/9);
+    lv_obj_set_style_bg_color(obj, lv_color_white(), LV_PART_MAIN);
+    lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_pad_all(obj, 0, LV_PART_MAIN);
+    lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(obj, 0, LV_PART_MAIN);
+
+    lv_obj_t *btn = lv_btn_create(obj);
+    lv_obj_set_size(btn, 60, 60);
+    lv_obj_align(btn, LV_ALIGN_CENTER, 0, -10);
+    lv_obj_set_style_bg_color(btn, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_border_width(btn, 2, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(btn, 0, LV_PART_MAIN);
+
+    switch (type) {
+        case 1: lv_obj_set_style_bg_img_src(btn, &img_JPG, LV_PART_MAIN); break;
+        case 2: lv_obj_set_style_bg_img_src(btn, &img_PNG, LV_PART_MAIN); break;
+        case 3: lv_obj_set_style_bg_img_src(btn, &img_BMP, LV_PART_MAIN); break;
+        default:
+            break;
+    }
+
+    lv_obj_t *lab = lv_label_create(obj);
+    lv_obj_set_style_text_font(lab, &Font_Mono_Bold_20, LV_PART_MAIN);
+    lv_label_set_text(lab, buf); // File suffixes are not displayed
+    lv_obj_align_to(lab, btn, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+
+    lv_obj_t *lab1 = lv_label_create(obj);
+    lv_label_set_text(lab1, text); 
+    lv_obj_add_flag(lab1, LV_OBJ_FLAG_HIDDEN);
+
+    lv_obj_add_event_cb(btn, read_img_btn_event, LV_EVENT_CLICKED, lab1);
+}
+
+static void scr3_read_from_SD(void)
+{
+    File root = SD.open("/");
+    if(!root){
+        Serial.println("Failed to open directory");
+        return;
+    }
+    // if(!root.isDirectory()){
+    //     Serial.println("Not a directory");
+    //     return;
+    // }
+
+    File file = root.openNextFile();
+    while(file) {
+        if(!file.isDirectory()) {
+            char *file_name = (char *)file.name();
+            uint16_t file_name_len = strlen(file_name);
+            char *suffix = file_name + file_name_len - 4;
+            int picture_type = 0;
+
+            picture_type = strcmp(suffix, ".jpg") == 0 ? 1 : picture_type;
+            picture_type = strcmp(suffix, ".png") == 0 ? 2 : picture_type;
+            picture_type = strcmp(suffix, ".bmp") == 0 ? 3 : picture_type;
+
+            if(picture_type) {
+                scr3_add_img_btn(file_name, file_name_len, picture_type);
+            }
+        }
+        file = root.openNextFile();
     }
 }
 
@@ -328,28 +437,10 @@ static void create3(lv_obj_t *parent) {
     lv_obj_set_style_pad_row(scr3_cont, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_column(scr3_cont, 0, LV_PART_MAIN);
 
-    for(int i = 0; i < 37; i++) {
-        lv_obj_t *obj = lv_obj_create(scr3_cont);
-        lv_obj_set_size(obj, LCD_HOR_SIZE/9, LCD_HOR_SIZE/9);
-        lv_obj_set_style_bg_color(obj, lv_color_white(), LV_PART_MAIN);
-        lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
-        lv_obj_set_style_pad_all(obj, 0, LV_PART_MAIN);
-        lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN);
-        lv_obj_set_style_shadow_width(obj, 0, LV_PART_MAIN);
+    scr3_read_from_SD();
 
-        lv_obj_t *btn = lv_btn_create(obj);
-        lv_obj_set_size(btn, 60, 60);
-        lv_obj_align(btn, LV_ALIGN_CENTER, 0, -10);
-        lv_obj_set_style_bg_color(btn, lv_color_white(), LV_PART_MAIN);
-        lv_obj_set_style_border_width(btn, 2, LV_PART_MAIN);
-        lv_obj_set_style_shadow_width(btn, 0, LV_PART_MAIN);
-        lv_obj_set_style_bg_img_src(btn, &img_PNG, LV_PART_MAIN);
-
-        lv_obj_t *lab = lv_label_create(obj);
-        lv_obj_set_style_text_font(lab, &Font_Mono_Bold_20, LV_PART_MAIN);
-        lv_label_set_text(lab, "image");
-        lv_obj_align_to(lab, btn, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
-    }
+    ui_photos_img = lv_img_create(scr3_cont);
+    lv_obj_center(ui_photos_img);
 
     // back
     scr_back_btn_create(parent, "SD", scr3_btn_event_cb);

@@ -5,6 +5,9 @@
  *                                  INCLUDES
  * *******************************************************************************/
 #include "lvgl.h"
+#include <FS.h>
+#include <SPI.h>
+#include <SD.h>
 
 /*********************************************************************************
  *                                   DEFINES
@@ -48,8 +51,10 @@ void ui_epd47_entry(void);
 void ui_if_epd_refr(void);
 void ui_if_epd_get_time(uint8_t *h, uint8_t *m, uint8_t *s);
 void ui_if_epd_get_data(uint8_t *year, uint8_t *month, uint8_t *day, uint8_t *week);
+// SD
 
 
+// test
 bool ui_if_epd_get_SD(void);
 bool ui_if_epd_get_RTC(void);
 bool ui_if_epd_get_TOUCH(void);

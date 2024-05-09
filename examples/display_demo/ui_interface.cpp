@@ -24,6 +24,8 @@ void ui_if_epd_get_data(uint8_t *year, uint8_t *month, uint8_t *day, uint8_t *we
     *day = timeinfo.tm_mday;
     *week = timeinfo.tm_wday;
 }
+//************************************[ screen 3 ]****************************************** sd_card
+
 //************************************[ screen 5 ]****************************************** test
 bool ui_if_epd_get_SD(void) { return sd_is_init; }
 bool ui_if_epd_get_RTC(void) { return rtc_is_init; }

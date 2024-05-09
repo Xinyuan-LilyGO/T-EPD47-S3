@@ -69,10 +69,9 @@ void disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
     if(disp_flush_enabled) {
         uint16_t w = lv_area_get_width(area);
         uint16_t h = lv_area_get_height(area);
-        // uint32_t gray = 0;
         int i=0, j=0;
         uint8_t *c  = (uint8_t *)color_p;
-        lv_color32_t *t = (lv_color32_t *)color_p;
+        lv_color32_t *t32 = (lv_color32_t *)color_p;
 
 #if LV_COLOR_DEPTH == 8
         for(i = 0; i < (w * h) / 2; i++) {
@@ -85,15 +84,13 @@ void disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
         }
 #elif LV_COLOR_DEPTH == 16
         for(i = 0; i < (w * h) / 2; i++) {
-            // uint8_t tmp = 0;
-            // tmp |= (c[j + 0] << 6) & 0xC0;
-            // tmp |= (c[j + 1] << 4) & 0x30;
-            // tmp |= (c[j + 2] << 2) & 0x0C;
-            // tmp |= (c[j + 3] << 0) & 0x03;
-            // decodebuffer[i] = tmp;
-            // j += 4;
-            decodebuffer[i] = t->ch.green;
-            t++;
+
+            lv_color8_t ret;
+            LV_COLOR_SET_R8(ret, LV_COLOR_GET_R(*t32) >> 5); /*8 - 3  = 5*/
+            LV_COLOR_SET_G8(ret, LV_COLOR_GET_G(*t32) >> 5); /*8 - 3  = 5*/
+            LV_COLOR_SET_B8(ret, LV_COLOR_GET_B(*t32) >> 6); /*8 - 2  = 6*/
+            decodebuffer[i] = ret.full;
+            t32++;
         }
 #elif LV_COLOR_DEPTH == 32
         for (int y = area->y1; y <= area->y2; y++) {

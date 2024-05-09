@@ -52,8 +52,8 @@ void ui_if_epd_refr(void);
 void ui_if_epd_get_time(uint8_t *h, uint8_t *m, uint8_t *s);
 void ui_if_epd_get_data(uint8_t *year, uint8_t *month, uint8_t *day, uint8_t *week);
 // SD
-
-
+void ui_if_epd_set_imgbtn(const char *text, int text_len, int type);
+void ui_if_epd_read_from_SD(void);
 // test
 bool ui_if_epd_get_SD(void);
 bool ui_if_epd_get_RTC(void);

@@ -1,4 +1,10 @@
 #pragma once
+// include 
+#include <FS.h>
+#include <SPI.h>
+#include <SD.h>
+
+
 
 // init flag
 extern bool sd_is_init;
@@ -11,4 +17,4 @@ extern bool wifi_is_connect;
 extern struct tm timeinfo;
 
 // refresh ink
-extern void disp_manual_refr(void);
+extern void disp_manual_refr(uint16_t time);

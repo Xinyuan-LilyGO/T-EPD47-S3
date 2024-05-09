@@ -3,9 +3,6 @@
 
 #include "firasans.h"
 #include "esp_adc_cal.h"
-#include <FS.h>
-#include <SPI.h>
-#include <SD.h>
 
 #include <Wire.h>
 #include <TouchDrvGT911.hpp>
@@ -25,24 +22,6 @@
 #define DISPLAY_HEIGHT 576
 #define DISPLAY_MAX_PAGE 2
 
-/* clang-format off */
-#define AREA_EVENT(a, tx, ty)                                                                         \
-    if (touch_press) {                                                                                \
-        for (int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {                                          \
-            if ((tx > a[i].x && tx < (a[i].x + a[i].w)) && (ty > a[i].y && ty < (a[i].y + a[i].h))) { \
-                touch_cnt++;                                                                          \
-                if (touch_cnt == 2) {                                                                 \
-                    switch (a[i].buttonID)                                                            \
-                    { 
-
-#define AREA_CASE(x) case x:
-
-#define AREA_END        \
-    default:break;}     \
-        touch_cnt = 0;} \
-        break; } } }
-/* clang-format on */
-
 //
 bool sd_is_init = false;
 bool rtc_is_init = false;
@@ -59,15 +38,6 @@ const char* ntpServer2 = "time.nist.gov";
 static uint32_t last_tick;
 bool wifi_is_connect = false;
 struct tm timeinfo = {0};
-
-int touch_press = 0;
-int touch_cnt = 0;
-int16_t touch_x, touch_y;
-int cursor_x, cursor_y;
-uint8_t *framebuffer;
-uint32_t interval = 0;
-int vref = 1100;
-char buf[128];
 
 struct _point
 {
@@ -93,14 +63,6 @@ uint8_t *decodebuffer = NULL;
 
 volatile bool disp_flush_enabled = true;
 bool disp_refr_is_busy = false;
-
-int mapTo1Byte(uint8_t* data) {
-    uint8_t byte = 0;
-    for (int i = 0; i < 4; i++) {
-        byte ^= *(data + i);
-    }
-    return byte;
-}
 
 void disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
@@ -159,10 +121,10 @@ void disp_refrensh_cb(lv_timer_t *t)
     epd_poweroff();
 }
 
-void disp_manual_refr(void)
+void disp_manual_refr(uint16_t time)
 {
     if(disp_refr_is_busy == false) {
-        lv_timer_create(disp_refrensh_cb, 200, NULL);
+        lv_timer_create(disp_refrensh_cb, time, NULL);
         disp_refr_is_busy = true;
     }
 }
@@ -222,11 +184,6 @@ static void get_curr_time(lv_timer_t *t)
             Serial.println("Failed to obtain time");
             return;
         }
-        // Serial.println(&timeinfo, "%F %T %A"); // 格式化输出
-        // timeinfo.tm_hour = timeinfo.tm_hour % 12;
-        // lv_msg_send(MSG_CLOCK_HOUR, &timeinfo.tm_hour);
-        // lv_msg_send(MSG_CLOCK_MINUTE, &timeinfo.tm_min);
-        // lv_msg_send(MSG_CLOCK_SECOND, &timeinfo.tm_sec);
     }
 }
 
@@ -336,7 +293,7 @@ void setup()
     // epd_clear();
     
     ui_epd47_entry();
-    disp_manual_refr();
+    disp_manual_refr(200);
 
     lv_timer_create(get_curr_time, 5000, NULL);
 }

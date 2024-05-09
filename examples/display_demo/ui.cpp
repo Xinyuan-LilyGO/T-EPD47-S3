@@ -3,6 +3,8 @@
 #include "scr_mrg.h"
 #include "Arduino.h"
 
+#define EPD_REFRESH_TIME 200
+
 //************************************[ Other fun ]******************************************
 void scr_back_btn_create(lv_obj_t *parent, const char *text, lv_event_cb_t cb)
 {
@@ -35,7 +37,7 @@ void scr_back_btn_create(lv_obj_t *parent, const char *text, lv_event_cb_t cb)
 #define MENU_CONT_HIGH (LCD_VER_SIZE * 0.80)
 
 /*** UI interfavce ***/
-void __attribute__((weak)) ui_if_epd_refr(void) {}
+void __attribute__((weak)) ui_if_epd_refr(uint16_t time) {}
 // end
 
 lv_obj_t *scr0_cont;
@@ -58,14 +60,14 @@ static void menu_btn_event(lv_event_t *e)
     int data = (int)e->user_data;
     if(e->code == LV_EVENT_CLICKED) {
         // printf("%s is clicked.\n", icon_buf[data].icon_str);
-        ui_if_epd_refr();
+        
         switch (data) {
-            case 0: scr_mgr_push(SCREEN1_ID, false); break;
-            case 1: scr_mgr_push(SCREEN2_ID, false); break;
-            case 2: scr_mgr_push(SCREEN3_ID, false); break;
-            case 3: scr_mgr_push(SCREEN4_ID, false); break;
-            case 4: scr_mgr_push(SCREEN5_ID, false); break;
-            case 5: scr_mgr_push(SCREEN6_ID, false); break;
+            case 0: scr_mgr_push(SCREEN1_ID, false); ui_if_epd_refr(EPD_REFRESH_TIME); break;
+            case 1: scr_mgr_push(SCREEN2_ID, false); ui_if_epd_refr(EPD_REFRESH_TIME); break;
+            case 2: scr_mgr_push(SCREEN3_ID, false); ui_if_epd_refr(500); break;
+            case 3: scr_mgr_push(SCREEN4_ID, false); ui_if_epd_refr(EPD_REFRESH_TIME); break;
+            case 4: scr_mgr_push(SCREEN5_ID, false); ui_if_epd_refr(EPD_REFRESH_TIME); break;
+            case 5: scr_mgr_push(SCREEN6_ID, false); ui_if_epd_refr(EPD_REFRESH_TIME); break;
             default: break;
         }
     }
@@ -184,13 +186,13 @@ static void get_timer_event(lv_timer_t *t)
 {
     // refresh time
     get_refresh_data();
-    ui_if_epd_refr();
+    ui_if_epd_refr(EPD_REFRESH_TIME);
 }
 
 static void scr1_btn_event_cb(lv_event_t * e)
 {
     if(e->code == LV_EVENT_CLICKED){
-        ui_if_epd_refr();
+        ui_if_epd_refr(EPD_REFRESH_TIME);
         scr_mgr_pop(false);
     }
 }
@@ -268,7 +270,7 @@ lv_obj_t *scr2_cont;
 static void scr2_btn_event_cb(lv_event_t * e)
 {
     if(e->code == LV_EVENT_CLICKED){
-        ui_if_epd_refr();
+        ui_if_epd_refr(EPD_REFRESH_TIME);
         scr_mgr_pop(false);
     }
 }
@@ -296,33 +298,8 @@ static scr_lifecycle_t screen2 = {
 #if 1
 
 lv_obj_t *scr3_cont;
-lv_obj_t *scr3_imgcont = NULL;
+lv_obj_t *sd_info;
 lv_obj_t *ui_photos_img = NULL;
-
-
-
-static void ui_photos_img_src_event(lv_event_t * e)
-{
-    lv_obj_del(scr3_imgcont);
-    scr3_imgcont = NULL;
-}
-
-static void imgcont_create(void)
-{
-    scr3_imgcont = lv_obj_create(NULL);
-    lv_obj_set_size(scr3_imgcont, lv_pct(100), lv_pct(100));
-    lv_obj_set_style_bg_color(scr3_imgcont, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_pad_all(scr3_imgcont, 0, 0);
-    lv_obj_set_style_radius(scr3_imgcont, 0, 0);
-    lv_obj_clear_flag(scr3_imgcont, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_add_flag(scr3_imgcont, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_event_cb(scr3_imgcont, ui_photos_img_src_event, LV_EVENT_CLICKED, NULL);
-
-    ui_photos_img = lv_img_create(scr3_imgcont);
-    lv_obj_center(ui_photos_img);
-    lv_obj_add_flag(ui_photos_img, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_event_cb(ui_photos_img, ui_photos_img_src_event, LV_EVENT_CLICKED, NULL);
-}
 
 static void read_img_btn_event(lv_event_t * e)
 {
@@ -330,21 +307,19 @@ static void read_img_btn_event(lv_event_t * e)
 
     if(e->code = LV_EVENT_CLICKED) {
         
-        if(scr3_imgcont == NULL) {
-            static char path[32];
-            lv_snprintf(path, 32, "S:/%s", file_name);
-            lv_img_set_src(ui_photos_img, path);
-            printf("event [%s]\n", path);
-            // imgcont_create();
-        }
-        ui_if_epd_refr();
+        static char path[32];
+        lv_snprintf(path, 32, "S:/%s", file_name);
+        lv_img_set_src(ui_photos_img, path);
+        printf("event [%s]\n", path);
+
+        ui_if_epd_refr(500);
     }
 }
 
 static void scr3_btn_event_cb(lv_event_t * e)
 {
     if(e->code == LV_EVENT_CLICKED){
-        ui_if_epd_refr();
+        ui_if_epd_refr(EPD_REFRESH_TIME);
         scr_mgr_pop(false);
     }
 }
@@ -366,17 +341,14 @@ static void scr3_add_img_btn(const char *text, int text_len, int type)
     lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN);
     lv_obj_set_style_shadow_width(obj, 0, LV_PART_MAIN);
 
-    lv_obj_t *btn = lv_btn_create(obj);
-    lv_obj_set_size(btn, 60, 60);
-    lv_obj_align(btn, LV_ALIGN_CENTER, 0, -10);
-    lv_obj_set_style_bg_color(btn, lv_color_white(), LV_PART_MAIN);
-    lv_obj_set_style_border_width(btn, 2, LV_PART_MAIN);
-    lv_obj_set_style_shadow_width(btn, 0, LV_PART_MAIN);
+    lv_obj_t *img = lv_img_create(obj);
+    lv_obj_align(img, LV_ALIGN_CENTER, 0, -10);
+    lv_obj_add_flag(img, LV_OBJ_FLAG_CLICKABLE);
 
     switch (type) {
-        case 1: lv_obj_set_style_bg_img_src(btn, &img_JPG, LV_PART_MAIN); break;
-        case 2: lv_obj_set_style_bg_img_src(btn, &img_PNG, LV_PART_MAIN); break;
-        case 3: lv_obj_set_style_bg_img_src(btn, &img_BMP, LV_PART_MAIN); break;
+        case 1: lv_img_set_src(img, &img_JPG); break;
+        case 2: lv_img_set_src(img, &img_PNG); break;
+        case 3: lv_img_set_src(img, &img_BMP); break;
         default:
             break;
     }
@@ -384,45 +356,13 @@ static void scr3_add_img_btn(const char *text, int text_len, int type)
     lv_obj_t *lab = lv_label_create(obj);
     lv_obj_set_style_text_font(lab, &Font_Mono_Bold_20, LV_PART_MAIN);
     lv_label_set_text(lab, buf); // File suffixes are not displayed
-    lv_obj_align_to(lab, btn, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+    lv_obj_align_to(lab, img, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
 
     lv_obj_t *lab1 = lv_label_create(obj);
     lv_label_set_text(lab1, text); 
     lv_obj_add_flag(lab1, LV_OBJ_FLAG_HIDDEN);
 
-    lv_obj_add_event_cb(btn, read_img_btn_event, LV_EVENT_CLICKED, lab1);
-}
-
-static void scr3_read_from_SD(void)
-{
-    File root = SD.open("/");
-    if(!root){
-        Serial.println("Failed to open directory");
-        return;
-    }
-    // if(!root.isDirectory()){
-    //     Serial.println("Not a directory");
-    //     return;
-    // }
-
-    File file = root.openNextFile();
-    while(file) {
-        if(!file.isDirectory()) {
-            char *file_name = (char *)file.name();
-            uint16_t file_name_len = strlen(file_name);
-            char *suffix = file_name + file_name_len - 4;
-            int picture_type = 0;
-
-            picture_type = strcmp(suffix, ".jpg") == 0 ? 1 : picture_type;
-            picture_type = strcmp(suffix, ".png") == 0 ? 2 : picture_type;
-            picture_type = strcmp(suffix, ".bmp") == 0 ? 3 : picture_type;
-
-            if(picture_type) {
-                scr3_add_img_btn(file_name, file_name_len, picture_type);
-            }
-        }
-        file = root.openNextFile();
-    }
+    lv_obj_add_event_cb(img, read_img_btn_event, LV_EVENT_CLICKED, lab1);
 }
 
 static void create3(lv_obj_t *parent) {
@@ -437,10 +377,20 @@ static void create3(lv_obj_t *parent) {
     lv_obj_set_style_pad_row(scr3_cont, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_column(scr3_cont, 0, LV_PART_MAIN);
 
-    scr3_read_from_SD();
+    lv_obj_t *lab1;
+    if(ui_if_epd_get_SD()) {
+        ui_if_epd_read_from_SD();
+        ui_photos_img = lv_img_create(lv_layer_top());
+        lv_obj_align(ui_photos_img, LV_ALIGN_BOTTOM_MID, 0, 0);
 
-    ui_photos_img = lv_img_create(scr3_cont);
-    lv_obj_center(ui_photos_img);
+        sd_info = lv_label_create(parent);
+        lv_obj_set_style_text_font(sd_info, &Font_Mono_Bold_30, LV_PART_MAIN);
+        lv_label_set_text(sd_info, "SD GALLERY"); 
+    } else {
+        sd_info = lv_label_create(parent);
+        lv_obj_set_style_text_font(sd_info, &Font_Mono_Bold_90, LV_PART_MAIN);
+        lv_label_set_text(sd_info, "NO FIND SD CARD!"); 
+    }
 
     // back
     scr_back_btn_create(parent, "SD", scr3_btn_event_cb);
@@ -448,9 +398,19 @@ static void create3(lv_obj_t *parent) {
 static void entry3(void) 
 {
     lv_obj_align(scr3_cont, LV_ALIGN_BOTTOM_MID, 0, 0);
+
+    if(ui_if_epd_get_SD()) {
+        lv_obj_align(sd_info, LV_ALIGN_TOP_MID, 0, 15);
+    } else {
+        lv_obj_center(sd_info);
+    }
 }
 static void exit3(void) { }
-static void destroy3(void) { }
+static void destroy3(void) {
+    if(ui_if_epd_get_SD()) {
+        lv_obj_del(ui_photos_img);
+    }
+}
 
 static scr_lifecycle_t screen3 = {
     .create = create3,
@@ -458,6 +418,17 @@ static scr_lifecycle_t screen3 = {
     .exit  = exit3,
     .destroy = destroy3,
 };
+
+/*** UI interfavce ***/
+void __attribute__((weak)) ui_if_epd_set_imgbtn(const char *text, int text_len, int type) 
+{
+    scr3_add_img_btn(text, text_len, type);
+}
+void __attribute__((weak)) ui_if_epd_read_from_SD(void) 
+{
+
+}
+// end
 #endif
 //************************************[ screen 4 ]****************************************** setting
 #if 1
@@ -466,7 +437,7 @@ lv_obj_t *scr4_cont;
 static void scr4_btn_event_cb(lv_event_t * e)
 {
     if(e->code == LV_EVENT_CLICKED){
-        ui_if_epd_refr();
+        ui_if_epd_refr(EPD_REFRESH_TIME);
         scr_mgr_pop(false);
     }
 }
@@ -509,7 +480,7 @@ bool __attribute__((weak)) ui_if_epd_get_LORA(void) {
 static void scr5_btn_event_cb(lv_event_t * e)
 {
     if(e->code == LV_EVENT_CLICKED){
-        ui_if_epd_refr();
+        ui_if_epd_refr(EPD_REFRESH_TIME);
         scr_mgr_pop(false);
     }
 }
@@ -546,7 +517,7 @@ lv_obj_t *scr6_cont;
 static void scr6_btn_event_cb(lv_event_t * e)
 {
     if(e->code == LV_EVENT_CLICKED){
-        ui_if_epd_refr();
+        ui_if_epd_refr(EPD_REFRESH_TIME);
         scr_mgr_pop(false);
     }
 }

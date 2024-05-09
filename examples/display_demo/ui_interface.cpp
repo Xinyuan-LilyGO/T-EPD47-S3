@@ -4,9 +4,9 @@
 
 
 //************************************[ Other fun ]******************************************
-void ui_if_epd_refr(void) 
+void ui_if_epd_refr(uint16_t time) 
 {
-    disp_manual_refr();
+    disp_manual_refr(time);
 }
 
 //************************************[ screen 0 ]****************************************** menu
@@ -25,7 +25,37 @@ void ui_if_epd_get_data(uint8_t *year, uint8_t *month, uint8_t *day, uint8_t *we
     *week = timeinfo.tm_wday;
 }
 //************************************[ screen 3 ]****************************************** sd_card
+// void ui_if_epd_set_imgbtn(const char *text, int text_len, int type)
+// {
 
+// }
+void ui_if_epd_read_from_SD(void)
+{
+    File root = SD.open("/");
+    if(!root){
+        Serial.println("Failed to open directory");
+        return;
+    }
+
+    File file = root.openNextFile();
+    while(file) {
+        if(!file.isDirectory()) {
+            char *file_name = (char *)file.name();
+            uint16_t file_name_len = strlen(file_name);
+            char *suffix = file_name + file_name_len - 4;
+            int picture_type = 0;
+
+            picture_type = strcmp(suffix, ".jpg") == 0 ? 1 : picture_type;
+            picture_type = strcmp(suffix, ".png") == 0 ? 2 : picture_type;
+            picture_type = strcmp(suffix, ".bmp") == 0 ? 3 : picture_type;
+
+            if(picture_type) {
+                ui_if_epd_set_imgbtn(file_name, file_name_len, picture_type);
+            }
+        }
+        file = root.openNextFile();
+    }
+}
 //************************************[ screen 5 ]****************************************** test
 bool ui_if_epd_get_SD(void) { return sd_is_init; }
 bool ui_if_epd_get_RTC(void) { return rtc_is_init; }

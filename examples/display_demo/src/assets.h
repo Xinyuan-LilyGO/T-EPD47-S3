@@ -26,9 +26,13 @@ LV_IMG_DECLARE(img_BMP)
 // LV_FONT_DECLARE(Font_Mono_Bold_16);
 // LV_FONT_DECLARE(Font_Mono_Bold_18);
 LV_FONT_DECLARE(Font_Mono_Bold_20);
+LV_FONT_DECLARE(Font_Mono_Bold_25);
 // LV_FONT_DECLARE(Font_Mono_Light_14);
 LV_FONT_DECLARE(Font_Mono_Bold_30)
 LV_FONT_DECLARE(Font_Mono_Bold_90)
+
+LV_FONT_DECLARE(Font_Geist_Light_20)
+LV_FONT_DECLARE(Font_Geist_Bold_20)
 
 #ifdef __cplusplus
 } /*extern "C"*/

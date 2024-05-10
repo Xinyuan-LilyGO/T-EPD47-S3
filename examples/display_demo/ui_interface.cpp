@@ -20,7 +20,7 @@ void ui_if_epd_get_time(uint8_t *h, uint8_t *m, uint8_t *s)
 void ui_if_epd_get_data(uint8_t *year, uint8_t *month, uint8_t *day, uint8_t *week) 
 {
     *year = timeinfo.tm_year % 100;
-    *month = timeinfo.tm_mon;
+    *month = timeinfo.tm_mon+1;
     *day = timeinfo.tm_mday;
     *week = timeinfo.tm_wday;
 }

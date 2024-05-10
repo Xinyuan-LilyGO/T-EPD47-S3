@@ -17,7 +17,7 @@
 
 #define EPD_COLOR_BG          0xffffff
 #define EPD_COLOR_FOCUS_ON    0x91B821
-#define EPD_COLOR_TEXT        0x161823
+#define EPD_COLOR_TEXT        0x000000
 #define EPD_COLOR_BORDER      0xBBBBBB
 #define EPD_COLOR_PROMPT_BG   0x1e1e00
 #define EPD_COLOR_PROMPT_TXT  0xfffee6

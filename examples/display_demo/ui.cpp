@@ -307,9 +307,10 @@ static scr_lifecycle_t screen2 = {
 //************************************[ screen 3 ]****************************************** sd_card
 #if 1
 
-lv_obj_t *scr3_cont;
+lv_obj_t *scr3_cont_file;
+lv_obj_t *scr3_cont_img;
 lv_obj_t *sd_info;
-lv_obj_t *ui_photos_img = NULL;
+lv_obj_t *ui_photos_img;
 
 static void read_img_btn_event(lv_event_t * e)
 {
@@ -343,13 +344,11 @@ static void scr3_add_img_btn(const char *text, int text_len, int type)
 
     printf("imgbtn [%s][%d][%s]\n", text, text_len, suffix);
 
-    lv_obj_t *obj = lv_obj_create(scr3_cont);
-    lv_obj_set_size(obj, LCD_HOR_SIZE/9, LCD_HOR_SIZE/9);
-    lv_obj_set_style_bg_color(obj, lv_color_white(), LV_PART_MAIN);
+    lv_obj_t *obj = lv_obj_create(scr3_cont_file);
+    lv_obj_set_size(obj, LCD_HOR_SIZE/11, LCD_HOR_SIZE/11);
     lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_pad_all(obj, 0, LV_PART_MAIN);
     lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN);
-    lv_obj_set_style_shadow_width(obj, 0, LV_PART_MAIN);
 
     lv_obj_t *img = lv_img_create(obj);
     lv_obj_align(img, LV_ALIGN_CENTER, 0, -10);
@@ -376,22 +375,48 @@ static void scr3_add_img_btn(const char *text, int text_len, int type)
 }
 
 static void create3(lv_obj_t *parent) {
-    scr3_cont = lv_obj_create(parent);
-    lv_obj_set_size(scr3_cont, lv_pct(100), lv_pct(85));
-    lv_obj_set_style_bg_color(scr3_cont, lv_color_white(), LV_PART_MAIN);
-    lv_obj_clear_flag(scr3_cont, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_scrollbar_mode(scr3_cont, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_border_width(scr3_cont, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(scr3_cont, 0, LV_PART_MAIN);
-    lv_obj_set_flex_flow(scr3_cont, LV_FLEX_FLOW_ROW_WRAP);
-    lv_obj_set_style_pad_row(scr3_cont, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_column(scr3_cont, 0, LV_PART_MAIN);
+    scr3_cont_file = lv_obj_create(parent);
+    lv_obj_set_size(scr3_cont_file, lv_pct(49), lv_pct(85));
+    lv_obj_set_style_bg_color(scr3_cont_file, lv_color_hex(EPD_COLOR_BG), LV_PART_MAIN);
+    lv_obj_set_scrollbar_mode(scr3_cont_file, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_border_width(scr3_cont_file, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(scr3_cont_file, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_hor(scr3_cont_file, 5, LV_PART_MAIN);
+    lv_obj_set_flex_flow(scr3_cont_file, LV_FLEX_FLOW_ROW_WRAP);
+    lv_obj_set_style_pad_row(scr3_cont_file, 5, LV_PART_MAIN);
+    lv_obj_set_style_pad_column(scr3_cont_file, 5, LV_PART_MAIN);
+    lv_obj_set_align(scr3_cont_file, LV_ALIGN_BOTTOM_LEFT);
+
+    scr3_cont_img = lv_obj_create(parent);
+    lv_obj_set_size(scr3_cont_img, lv_pct(49), lv_pct(85));
+    lv_obj_set_style_bg_color(scr3_cont_img, lv_color_hex(EPD_COLOR_BG), LV_PART_MAIN);
+    lv_obj_set_scrollbar_mode(scr3_cont_img, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_border_width(scr3_cont_img, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(scr3_cont_img, 0, LV_PART_MAIN);
+    lv_obj_set_align(scr3_cont_img, LV_ALIGN_BOTTOM_RIGHT);
+
+    //---------------------
+    ui_photos_img = lv_img_create(scr3_cont_img);
+    lv_obj_align(ui_photos_img, LV_ALIGN_CENTER, 0, 0);
+
+    //---------------------
+    static lv_point_t line_points[] = { {LCD_HOR_SIZE/2, 0}, {LCD_HOR_SIZE/2, LCD_VER_SIZE-150}};
+    /*Create style*/
+    static lv_style_t style_line;
+    lv_style_init(&style_line);
+    lv_style_set_line_width(&style_line, 2);
+    lv_style_set_line_color(&style_line, lv_color_black());
+    lv_style_set_line_rounded(&style_line, true);
+    /*Create a line and apply the new style*/
+    lv_obj_t * line1;
+    line1 = lv_line_create(parent);
+    lv_line_set_points(line1, line_points, 2);     /*Set the points*/
+    lv_obj_add_style(line1, &style_line, 0);
+    lv_obj_set_align(line1, LV_ALIGN_LEFT_MID);
 
     lv_obj_t *lab1;
     if(ui_if_epd_get_SD()) {
         ui_if_epd_read_from_SD();
-        ui_photos_img = lv_img_create(lv_layer_top());
-        lv_obj_align(ui_photos_img, LV_ALIGN_BOTTOM_MID, 0, 0);
 
         sd_info = lv_label_create(parent);
         lv_obj_set_style_text_font(sd_info, &Font_Mono_Bold_30, LV_PART_MAIN);
@@ -407,7 +432,7 @@ static void create3(lv_obj_t *parent) {
 }
 static void entry3(void) 
 {
-    lv_obj_align(scr3_cont, LV_ALIGN_BOTTOM_MID, 0, 0);
+    // lv_obj_align(scr3_cont, LV_ALIGN_BOTTOM_MID, 0, 0);
 
     if(ui_if_epd_get_SD()) {
         lv_obj_align(sd_info, LV_ALIGN_TOP_MID, 0, 22);
@@ -417,9 +442,6 @@ static void entry3(void)
 }
 static void exit3(void) { }
 static void destroy3(void) {
-    if(ui_if_epd_get_SD()) {
-        lv_obj_del(ui_photos_img);
-    }
 }
 
 static scr_lifecycle_t screen3 = {

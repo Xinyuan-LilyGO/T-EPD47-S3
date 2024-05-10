@@ -254,8 +254,8 @@ static void entry1(void) {
     lv_obj_set_style_text_align(clock_data, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_set_style_text_align(clock_ap, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_align(clock_time, LV_ALIGN_LEFT_MID, 70, -50);
-    lv_obj_align_to(clock_data, clock_time, LV_ALIGN_OUT_BOTTOM_MID, 0, 30);
-    lv_obj_align_to(clock_ap, clock_time, LV_ALIGN_OUT_RIGHT_MID, 0, 20);
+    lv_obj_align_to(clock_data, clock_time, LV_ALIGN_OUT_BOTTOM_MID, 20, 30);
+    lv_obj_align_to(clock_ap, clock_time, LV_ALIGN_OUT_RIGHT_MID, 5, 20);
     lv_obj_align_to(clock_month, calendar, LV_ALIGN_OUT_TOP_RIGHT, 0, -5);
 }
 static void exit1(void) {
@@ -472,6 +472,109 @@ static scr_lifecycle_t screen4 = {
 #endif
 //************************************[ screen 5 ]****************************************** test
 #if 1
+lv_obj_t *scr5_cont_PASS;
+lv_obj_t *scr5_cont_FAIL;
+
+static void scr5_btn_event_cb(lv_event_t * e)
+{
+    if(e->code == LV_EVENT_CLICKED){
+        ui_if_epd_refr(EPD_REFRESH_TIME);
+        scr_mgr_pop(false);
+    }
+}
+
+lv_obj_t * scr5_imgbtn_create(lv_obj_t *parent, const void *src, const char *text)
+{
+    lv_obj_t *obj = lv_obj_create(parent);
+    lv_obj_set_size(obj, 120, 150);
+    lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(obj, 0, LV_PART_MAIN);
+
+    lv_obj_t *img = lv_img_create(obj);
+    lv_img_set_src(img, src);
+    lv_obj_align(img, LV_ALIGN_TOP_MID, 0, 0);
+
+    lv_obj_t *lab = lv_label_create(obj);
+    lv_obj_set_style_text_font(lab, &Font_Mono_Bold_25, LV_PART_MAIN);
+    lv_label_set_text(lab, text);
+    lv_obj_align_to(lab, img, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+    return obj;
+}
+
+
+static void create5(lv_obj_t *parent) {
+
+    scr5_cont_PASS = lv_obj_create(parent);
+    lv_obj_set_size(scr5_cont_PASS, lv_pct(49), lv_pct(80));
+    lv_obj_set_style_bg_color(scr5_cont_PASS, lv_color_hex(EPD_COLOR_BG), LV_PART_MAIN);
+    lv_obj_set_scrollbar_mode(scr5_cont_PASS, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_border_width(scr5_cont_PASS, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(scr5_cont_PASS, 26, LV_PART_MAIN);
+    lv_obj_set_flex_flow(scr5_cont_PASS, LV_FLEX_FLOW_ROW_WRAP);
+    lv_obj_set_style_pad_row(scr5_cont_PASS, 27, LV_PART_MAIN);
+    lv_obj_set_style_pad_column(scr5_cont_PASS, 27, LV_PART_MAIN);
+    lv_obj_set_align(scr5_cont_PASS, LV_ALIGN_BOTTOM_LEFT);
+
+    scr5_cont_FAIL = lv_obj_create(parent);
+    lv_obj_set_size(scr5_cont_FAIL, lv_pct(49), lv_pct(80));
+    lv_obj_set_style_bg_color(scr5_cont_FAIL, lv_color_hex(EPD_COLOR_BG), LV_PART_MAIN);
+    lv_obj_set_scrollbar_mode(scr5_cont_FAIL, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_border_width(scr5_cont_FAIL, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(scr5_cont_FAIL, 26, LV_PART_MAIN);
+    lv_obj_set_flex_flow(scr5_cont_FAIL, LV_FLEX_FLOW_ROW_WRAP);
+    lv_obj_set_style_pad_row(scr5_cont_FAIL, 27, LV_PART_MAIN);
+    lv_obj_set_style_pad_column(scr5_cont_FAIL, 27, LV_PART_MAIN);
+    lv_obj_set_align(scr5_cont_FAIL, LV_ALIGN_BOTTOM_RIGHT);
+
+
+    lv_obj_t *pass = lv_label_create(parent);
+    lv_obj_t *fail = lv_label_create(parent);
+
+    lv_obj_set_style_text_font(pass, &Font_Mono_Bold_25, LV_PART_MAIN);
+    lv_obj_set_style_text_font(fail, &Font_Mono_Bold_25, LV_PART_MAIN);
+
+    lv_label_set_text(pass, "INIT PASS");
+    lv_label_set_text(fail, "INIT FAIL");
+
+    lv_obj_align_to(pass, scr5_cont_PASS, LV_ALIGN_OUT_TOP_MID, 0, 0);
+    lv_obj_align_to(fail, scr5_cont_FAIL, LV_ALIGN_OUT_TOP_MID, 0, 0);
+
+    
+    //---------------------
+    ui_if_epd_get_SD() ? scr5_imgbtn_create(scr5_cont_PASS, &img_sd_card, "sd card") : scr5_imgbtn_create(scr5_cont_FAIL, &img_sd_card, "sd card");
+    ui_if_epd_get_RTC() ? scr5_imgbtn_create(scr5_cont_PASS, &img_rtc, "RTC") : scr5_imgbtn_create(scr5_cont_FAIL, &img_rtc, "RTC");
+    ui_if_epd_get_TOUCH() ? scr5_imgbtn_create(scr5_cont_PASS, &img_touch, "touch") : scr5_imgbtn_create(scr5_cont_FAIL, &img_touch, "touch");
+    ui_if_epd_get_LORA() ? scr5_imgbtn_create(scr5_cont_PASS, &img_lora, "lora") : scr5_imgbtn_create(scr5_cont_FAIL, &img_lora, "lora");
+
+    //---------------------
+    static lv_point_t line_points[] = { {LCD_HOR_SIZE/2, 0}, {LCD_HOR_SIZE/2, LCD_VER_SIZE-150}};
+    /*Create style*/
+    static lv_style_t style_line;
+    lv_style_init(&style_line);
+    lv_style_set_line_width(&style_line, 2);
+    lv_style_set_line_color(&style_line, lv_color_black());
+    lv_style_set_line_rounded(&style_line, true);
+    /*Create a line and apply the new style*/
+    lv_obj_t * line1;
+    line1 = lv_line_create(parent);
+    lv_line_set_points(line1, line_points, 2);     /*Set the points*/
+    lv_obj_add_style(line1, &style_line, 0);
+    lv_obj_set_align(line1, LV_ALIGN_LEFT_MID);
+
+    scr_back_btn_create(parent, "Test", scr5_btn_event_cb);
+}
+static void entry5(void) { }
+static void exit5(void) { }
+static void destroy5(void) { }
+
+static scr_lifecycle_t screen5 = {
+    .create = create5,
+    .entry = entry5,
+    .exit  = exit5,
+    .destroy = destroy5,
+};
+
 /*** UI interfavce ***/
 bool __attribute__((weak)) ui_if_epd_get_SD(void) {
     return false;
@@ -487,38 +590,6 @@ bool __attribute__((weak)) ui_if_epd_get_LORA(void) {
 }
 // end
 
-static void scr5_btn_event_cb(lv_event_t * e)
-{
-    if(e->code == LV_EVENT_CLICKED){
-        ui_if_epd_refr(EPD_REFRESH_TIME);
-        scr_mgr_pop(false);
-    }
-}
-
-static void create5(lv_obj_t *parent) {
-     lv_obj_t *lab = lv_label_create(parent);
-    lv_obj_center(lab);
-    lv_label_set_text_fmt(lab,  "SD init ------ %s\n"
-                                "RTC init ----- %s\n"
-                                "TOUCH init --- %s\n"
-                                "LORA init ---- %s\n",
-    (ui_if_epd_get_SD()    ? "PASS" : "FAIL"),
-    (ui_if_epd_get_RTC()   ? "PASS" : "FAIL"),
-    (ui_if_epd_get_TOUCH() ? "PASS" : "FAIL"),
-    (ui_if_epd_get_LORA()  ? "PASS" : "FAIL"));
-
-    scr_back_btn_create(parent, "Test", scr5_btn_event_cb);
-}
-static void entry5(void) { }
-static void exit5(void) { }
-static void destroy5(void) { }
-
-static scr_lifecycle_t screen5 = {
-    .create = create5,
-    .entry = entry5,
-    .exit  = exit5,
-    .destroy = destroy5,
-};
 #endif
 //************************************[ screen 6 ]****************************************** wifi
 #if 1

@@ -9,7 +9,7 @@ void ui_if_epd_refr(uint16_t time)
     disp_manual_refr(time);
 }
 
-//************************************[ screen 0 ]****************************************** menu
+//************************************[ screen 1 ]****************************************** clock
 void ui_if_epd_get_time(uint8_t *h, uint8_t *m, uint8_t *s) 
 {
     *h = timeinfo.tm_hour;
@@ -24,6 +24,21 @@ void ui_if_epd_get_data(uint8_t *year, uint8_t *month, uint8_t *day, uint8_t *we
     *day = timeinfo.tm_mday;
     *week = timeinfo.tm_wday;
 }
+//************************************[ screen 2 ]****************************************** lora
+int ui_if_epd_get_LORA_mode(void)
+{
+    return lora_mode;
+}
+void ui_if_epd_set_LORA_mode(int mode)
+{
+    lora_set_mode(mode);
+}
+
+void ui_if_epd_LORA_send(const char *str)
+{
+    lora_transmit(str);
+}
+
 //************************************[ screen 3 ]****************************************** sd_card
 // void ui_if_epd_set_imgbtn(const char *text, int text_len, int type)
 // {
@@ -56,8 +71,28 @@ void ui_if_epd_read_from_SD(void)
         file = root.openNextFile();
     }
 }
+//************************************[ screen 4 ]****************************************** setting
+void ui_if_epd_set_light(uint8_t light)
+{
+    analogWrite(BL_EN, light);
+}
 //************************************[ screen 5 ]****************************************** test
 bool ui_if_epd_get_SD(void) { return sd_is_init; }
 bool ui_if_epd_get_RTC(void) { return rtc_is_init; }
 bool ui_if_epd_get_TOUCH(void) { return touchOnline; }
 bool ui_if_epd_get_LORA(void) { return lora_is_init; }
+bool ui_if_epd_get_WIFI(void) { return wifi_is_connect; }
+
+//************************************[ screen 5 ]****************************************** wifi
+String ui_if_epd_get_WIFI_ip(void)
+{
+    return WiFi.localIP().toString();
+}
+const char *ui_if_epd_get_WIFI_ssid(void)
+{
+    return WIFI_SSID;
+}
+const char *ui_if_epd_get_WIFI_pwd(void)
+{
+    return WIFI_PASSWORD;
+}

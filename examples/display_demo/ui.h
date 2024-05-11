@@ -51,12 +51,24 @@ void ui_epd47_entry(void);
 void ui_if_epd_refr(void);
 void ui_if_epd_get_time(uint8_t *h, uint8_t *m, uint8_t *s);
 void ui_if_epd_get_data(uint8_t *year, uint8_t *month, uint8_t *day, uint8_t *week);
+// LORA
+int ui_if_epd_get_LORA_mode(void);
+void ui_if_epd_set_LORA_mode(int mode);
+void ui_if_epd_LORA_send(const char *str);
+
 // SD
 void ui_if_epd_set_imgbtn(const char *text, int text_len, int type);
 void ui_if_epd_read_from_SD(void);
+// setting
+void ui_if_epd_set_light(uint8_t light);
 // test
 bool ui_if_epd_get_SD(void);
 bool ui_if_epd_get_RTC(void);
 bool ui_if_epd_get_TOUCH(void);
 bool ui_if_epd_get_LORA(void);
+bool ui_if_epd_get_WIFI(void);
+// wifi
+String ui_if_epd_get_WIFI_ip(void);
+const char *ui_if_epd_get_WIFI_ssid(void);
+const char *ui_if_epd_get_WIFI_pwd(void);
 #endif /* __UI_EPD47H__ */

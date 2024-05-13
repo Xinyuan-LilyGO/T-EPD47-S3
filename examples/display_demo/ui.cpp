@@ -258,7 +258,7 @@ static void entry1(void) {
     if(is_ref) {
         get_timer = lv_timer_create(get_timer_event, 60*1000, NULL);
     } else {
-        get_timer = lv_timer_create(get_timer_event, 1000, NULL);
+        get_timer = lv_timer_create(get_timer_event, 6000, NULL);
     }
     
     // layout

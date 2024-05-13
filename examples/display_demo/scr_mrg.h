@@ -1,5 +1,6 @@
-﻿#ifndef __SCR_MRG_H__
-#define __SCR_MRG_H__
+
+#ifndef __SCR_MGR_H_
+#define __SCR_MGR_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,6 +12,7 @@ extern "C" {
 #define SCR_MGR_SCR_SWITCH_ANIM    LV_SCR_LOAD_ANIM_NONE
 #define SCR_MGR_SCR_PUSH_ANIM      LV_SCR_LOAD_ANIM_MOVE_LEFT
 #define SCR_MGR_SCR_POP_ANIM       LV_SCR_LOAD_ANIM_MOVE_RIGHT
+
 typedef enum scr_mgr_state {
     SCR_MGR_STATE_IDLE = 0,  /* Not in use */
     SCR_MGR_STATE_DESTROYED, /* Not active and having been destroyed */

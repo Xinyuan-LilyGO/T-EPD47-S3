@@ -2,6 +2,7 @@
 // include 
 #include <Arduino.h>
 #include "epd_driver.h"
+#include "utilities.h"
 #include "firasans.h"
 #include "esp_adc_cal.h"
 #include <Wire.h>
@@ -16,8 +17,8 @@
 #include <SD.h>
 
 // define 
-#define WIFI_SSID "Your WiFi SSID"
-#define WIFI_PASSWORD "Your WiFi PASSWORD"
+#define WIFI_SSID "xinyuandianzi"
+#define WIFI_PASSWORD "AA15994823428"
 
 // init flag
 extern bool sd_is_init;

@@ -17,8 +17,8 @@
 #include <SD.h>
 
 // define 
-#define WIFI_SSID "xinyuandianzi"
-#define WIFI_PASSWORD "AA15994823428"
+#define WIFI_SSID "Your WiFi SSID"
+#define WIFI_PASSWORD "Your WiFi PASSWORD"
 
 // init flag
 extern bool sd_is_init;

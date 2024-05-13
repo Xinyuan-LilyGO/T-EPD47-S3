@@ -408,9 +408,9 @@ void setup()
     // epd_clear();
     
     ui_epd47_entry();
-    disp_manual_refr(200);
+    disp_manual_refr(500);
 
-    get_curr_time(NULL);
+    // get_curr_time(NULL);
     get_curr_data_timer = lv_timer_create(get_curr_time, 5000, NULL);
 }
 

@@ -9,12 +9,15 @@ bool lora_is_init = false;
 bool touchOnline = false;
 
 // wifi
-const char *wifi_ssid = WIFI_SSID;
-const char *wifi_password = WIFI_PASSWORD;
+char wifi_ssid[WIFI_SSID_MAX_LEN] = {0};
+char wifi_password[WIFI_PSWD_MAX_LEN] = {0};
+// const char *wifi_ssid = WIFI_SSID;
+// const char *wifi_password = WIFI_PASSWORD;
 const char *ntpServer1 = "pool.ntp.org";
 const char* ntpServer2 = "time.nist.gov";
 static uint32_t last_tick;
 bool wifi_is_connect = false;
+bool wifi_eeprom_upd = false;
 struct tm timeinfo = {0};
 
 SensorPCF8563 rtc;
@@ -37,6 +40,105 @@ volatile bool receivedFlag = false;
 
 void set_receive_flag(void){
     receivedFlag = true;
+}
+
+// eeprom
+void eeprom_default_val(void)
+{
+    char wifi_ssid[WIFI_SSID_MAX_LEN] = WIFI_SSID;
+    char wifi_password[WIFI_PSWD_MAX_LEN] = WIFI_PASSWORD;
+
+    EEPROM.write(0, EEPROM_UPDATA_FLAG_NUM);
+    for(int i = WIFI_SSID_EEPROM_ADDR; i < WIFI_SSID_EEPROM_ADDR + WIFI_SSID_MAX_LEN; i++) {
+        int k = i - WIFI_SSID_EEPROM_ADDR;
+        if(k < WIFI_SSID_MAX_LEN) {
+            EEPROM.write(i, wifi_ssid[k]);
+        } else {
+            EEPROM.write(i, 0x00);
+        }
+    }
+    for(int i = WIFI_PSWD_EEPROM_ADDR; i < WIFI_PSWD_EEPROM_ADDR + WIFI_PSWD_MAX_LEN; i++) {
+        int k = i - WIFI_PSWD_EEPROM_ADDR;
+        if(k < WIFI_PSWD_MAX_LEN) {
+            EEPROM.write(i, wifi_password[k]);
+        } else {
+            EEPROM.write(i, 0x00);
+        }
+    }
+    EEPROM.commit();
+    wifi_eeprom_upd = true;
+}
+
+void eeprom_wr(int addr, uint8_t val)
+{
+    if(wifi_eeprom_upd == false) {
+        eeprom_default_val();
+    }
+    EEPROM.write(addr, val);
+    EEPROM.commit();
+    Serial.printf("eeprom_wr %d:%d\n", addr, val);
+}
+
+void eeprom_wr_wifi(const char *ssid, uint16_t ssid_len, const char *pwsd, uint16_t pwsd_len)
+{
+    Serial.printf("[eeprom] eeprom_wr_wifi \n%s:%d\n%s:%d\n", ssid, ssid_len, pwsd, pwsd_len);
+    if(ssid_len > WIFI_SSID_MAX_LEN) 
+        ssid_len = WIFI_SSID_MAX_LEN;
+    if(pwsd_len > WIFI_PSWD_MAX_LEN)
+        pwsd_len = WIFI_PSWD_MAX_LEN;
+
+    if(wifi_eeprom_upd == false) {
+        EEPROM.write(0, EEPROM_UPDATA_FLAG_NUM);
+        wifi_eeprom_upd = true;
+    }
+
+    for(int i = WIFI_SSID_EEPROM_ADDR; i < WIFI_SSID_EEPROM_ADDR + WIFI_SSID_MAX_LEN; i++) {
+        int k = i - WIFI_SSID_EEPROM_ADDR;
+        if(k < ssid_len) {
+            EEPROM.write(i, ssid[k]);
+        } else {
+            EEPROM.write(i, 0x00);
+        }
+    }
+    for(int i = WIFI_PSWD_EEPROM_ADDR; i < WIFI_PSWD_EEPROM_ADDR + WIFI_PSWD_MAX_LEN; i++) {
+        int k = i - WIFI_PSWD_EEPROM_ADDR;
+        if(k < pwsd_len) {
+            EEPROM.write(i, pwsd[k]);
+        } else {
+            EEPROM.write(i, 0x00);
+        }
+    }
+    EEPROM.commit();
+}
+
+void eeprom_init()
+{
+    if (!EEPROM.begin(EEPROM_SIZE_MAX)) {
+        Serial.println("[eeprom] failed to initialise EEPROM"); delay(1000000);
+    }
+    uint8_t frist_flag = EEPROM.read(0);
+    Serial.printf("eeprom flag: %d\n", frist_flag);
+    if(frist_flag == EEPROM_UPDATA_FLAG_NUM) {
+        for(int i = WIFI_SSID_EEPROM_ADDR; i < WIFI_SSID_EEPROM_ADDR + WIFI_SSID_MAX_LEN; i++) {
+            wifi_ssid[i - WIFI_SSID_EEPROM_ADDR] = EEPROM.read(i);
+        }
+        for(int i = WIFI_PSWD_EEPROM_ADDR; i < WIFI_PSWD_EEPROM_ADDR + WIFI_PSWD_MAX_LEN; i++) {
+            wifi_password[i - WIFI_PSWD_EEPROM_ADDR] = EEPROM.read(i);
+        }
+
+        wifi_eeprom_upd = true;
+        
+        Serial.printf("eeprom SSID: %s\n", wifi_ssid);
+        Serial.printf("eeprom PWSD: %s\n", wifi_password);
+        uint8_t theme = EEPROM.read(UI_THEME_EEPROM_ADDR);
+        uint8_t rotation = EEPROM.read(UI_ROTATION_EEPROM_ADDR);
+
+        // setting_theme = theme;
+        // display_rotation = (rotation == 1 ? 1 : 3);d
+        
+        Serial.printf("eeprom theme: %d\n", theme);
+        Serial.printf("eeprom rotation: %d\n", rotation);
+    }
 }
 
 // lvgl
@@ -155,7 +257,6 @@ void lv_port_disp_init(void)
     // static lv_indev_t * my_indev = lv_indev_drv_register(&indev_drv);
     lv_indev_drv_register(&indev_drv);
 }
-
 
 static void get_curr_time(lv_timer_t *t)
 {
@@ -348,7 +449,10 @@ void setup()
     pinMode(BL_EN, OUTPUT);
     analogWrite(BL_EN, 0);
 
+    eeprom_init();
+
     wifi_init();
+    configTime(8 * 3600, 0, ntpServer1, ntpServer2);
 
     epd_init();
 

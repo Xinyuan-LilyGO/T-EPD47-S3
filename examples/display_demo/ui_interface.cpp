@@ -90,9 +90,9 @@ String ui_if_epd_get_WIFI_ip(void)
 }
 const char *ui_if_epd_get_WIFI_ssid(void)
 {
-    return WIFI_SSID;
+    return wifi_ssid;
 }
 const char *ui_if_epd_get_WIFI_pwd(void)
 {
-    return WIFI_PASSWORD;
+    return wifi_password;
 }

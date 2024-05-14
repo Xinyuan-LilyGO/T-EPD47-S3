@@ -842,10 +842,119 @@ bool __attribute__((weak)) ui_if_epd_get_WIFI(void){
 #endif
 //************************************[ screen 6 ]****************************************** wifi
 #if 1
+lv_obj_t *scr6_root;
 lv_obj_t *wifi_st_lab = NULL;
 lv_obj_t *ip_lab;
 lv_obj_t *ssid_lab;
 lv_obj_t *pwd_lab;
+
+static volatile bool smartConfigStart      = false;
+static lv_timer_t   *wifi_timer            = NULL;
+static uint32_t      wifi_timer_counter    = 0;
+static uint32_t      wifi_connnect_timeout = 60;
+
+static void wifi_info_label_create(lv_obj_t *parent)
+{
+    ip_lab = lv_label_create(parent);
+    // lv_obj_set_style_text_color(ip_lab, lv_color_hex(COLOR_TEXT), LV_PART_MAIN);
+    lv_obj_set_style_text_font(ip_lab, &Font_Mono_Bold_25, LV_PART_MAIN);
+    lv_label_set_text_fmt(ip_lab, "ip: %s", ui_if_epd_get_WIFI_ip());
+    lv_obj_align_to(ip_lab, wifi_st_lab, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 10);
+
+    ssid_lab = lv_label_create(parent);
+    // lv_obj_set_style_text_color(ssid_lab, lv_color_hex(COLOR_TEXT), LV_PART_MAIN);
+    lv_obj_set_style_text_font(ssid_lab, &Font_Mono_Bold_25, LV_PART_MAIN);
+    lv_label_set_text_fmt(ssid_lab, "ssid: %s", ui_if_epd_get_WIFI_ssid());
+    lv_obj_align_to(ssid_lab, ip_lab, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 10);
+
+    pwd_lab = lv_label_create(parent);
+    // lv_obj_set_style_text_color(pwd_lab, lv_color_hex(COLOR_TEXT), LV_PART_MAIN);
+    lv_obj_set_style_text_font(pwd_lab, &Font_Mono_Bold_25, LV_PART_MAIN);
+    lv_label_set_text_fmt(pwd_lab, "pswd: %s", ui_if_epd_get_WIFI_pwd());
+    lv_obj_align_to(pwd_lab, ssid_lab, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 10);
+}
+
+static void wifi_config_event_handler(lv_event_t *e)
+{
+    static int step = 0;
+    lv_event_code_t code  = lv_event_get_code(e);
+
+    if(code != LV_EVENT_CLICKED) {
+        return;
+    }
+
+    if(wifi_is_connect){
+        Serial.println(" WiFi is connected do not need to configure WiFi.");
+        return;
+    }
+
+    if (smartConfigStart) {
+        Serial.println("[wifi config] Config Stop");
+        if (wifi_timer) {
+            lv_timer_del(wifi_timer);
+            wifi_timer = NULL;
+        }
+        WiFi.stopSmartConfig();
+        Serial.println("return smart Config has Start;");
+        smartConfigStart = false;
+        return;
+    }
+    WiFi.disconnect();
+    smartConfigStart = true;
+    WiFi.beginSmartConfig();
+    Serial.println("[wifi config] Config Start");
+    lv_label_set_text(wifi_st_lab, "Wifi Config ...");
+    ui_if_epd_refr(EPD_REFRESH_TIME);
+    
+    wifi_timer = lv_timer_create([](lv_timer_t *t) {
+        bool      destory = false;
+        wifi_timer_counter++;
+        if (wifi_timer_counter > wifi_connnect_timeout && !WiFi.isConnected()) {
+            Serial.println("Connect timeout!");
+            destory = true;
+            Serial.println("[wifi config] Time Out");
+        }
+        if (WiFi.isConnected()) {
+            Serial.println("WiFi has connected!");
+            Serial.printf("SSID:%s\r\n", WiFi.SSID().c_str());
+            Serial.printf("PSW:%s\r\n", WiFi.psk().c_str());
+
+            if(strcmp(wifi_ssid, WiFi.SSID().c_str()) == 0) {
+                Serial.printf("SSID == CURR SSID\r\n");
+            }
+            if(strcmp(wifi_password, WiFi.psk().c_str()) == 0) {
+                Serial.printf("PSW == CURR PSW\r\n");
+            }
+            
+            String ssid = WiFi.SSID();
+            String pwsd = WiFi.psk();
+            if(strcmp(wifi_ssid, ssid.c_str()) != 0 ||
+               strcmp(wifi_password, pwsd.c_str()) != 0) {
+                memcpy(wifi_ssid, ssid.c_str(), WIFI_SSID_MAX_LEN);
+                memcpy(wifi_password, pwsd.c_str(), WIFI_PSWD_MAX_LEN);
+                eeprom_wr_wifi(ssid.c_str(), ssid.length(), pwsd.c_str(), pwsd.length());
+            }
+
+            destory   = true;
+            String IP = WiFi.localIP().toString();
+            wifi_is_connect = true;
+            Serial.println("[wifi config] WiFi has connected!");
+
+            lv_label_set_text(wifi_st_lab, (wifi_is_connect == true ? "Wifi Connect" : "Wifi Disconnect"));
+            wifi_info_label_create(scr6_root);
+            ui_if_epd_refr(EPD_REFRESH_TIME);
+        }
+        if (destory) {
+            WiFi.stopSmartConfig();
+            smartConfigStart = false;
+            lv_timer_del(wifi_timer);
+            wifi_timer         = NULL;
+            wifi_timer_counter = 0;
+        }
+        // Every seconds check conected
+    },
+    1000, NULL);
+}
 
 static void scr6_btn_event_cb(lv_event_t * e)
 {
@@ -855,41 +964,80 @@ static void scr6_btn_event_cb(lv_event_t * e)
     }
 }
 
-static void wifi_info_label_create(lv_obj_t *parent)
-{
-    ip_lab = lv_label_create(parent);
-    // lv_obj_set_style_text_color(ip_lab, lv_color_hex(COLOR_TEXT), LV_PART_MAIN);
-    lv_obj_set_style_text_font(ip_lab, &Font_Mono_Bold_30, LV_PART_MAIN);
-    lv_label_set_text_fmt(ip_lab, "ip: %s", ui_if_epd_get_WIFI_ip());
-    lv_obj_align_to(ip_lab, wifi_st_lab, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 10);
-
-    ssid_lab = lv_label_create(parent);
-    // lv_obj_set_style_text_color(ssid_lab, lv_color_hex(COLOR_TEXT), LV_PART_MAIN);
-    lv_obj_set_style_text_font(ssid_lab, &Font_Mono_Bold_30, LV_PART_MAIN);
-    lv_label_set_text_fmt(ssid_lab, "ssid: %s", ui_if_epd_get_WIFI_ssid());
-    lv_obj_align_to(ssid_lab, ip_lab, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 10);
-
-    pwd_lab = lv_label_create(parent);
-    // lv_obj_set_style_text_color(pwd_lab, lv_color_hex(COLOR_TEXT), LV_PART_MAIN);
-    lv_obj_set_style_text_font(pwd_lab, &Font_Mono_Bold_30, LV_PART_MAIN);
-    lv_label_set_text_fmt(pwd_lab, "pswd: %s", ui_if_epd_get_WIFI_pwd());
-    lv_obj_align_to(pwd_lab, ssid_lab, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 10);
-}
-
 static void create6(lv_obj_t *parent) {
-
+    scr6_root = parent;
     wifi_st_lab = lv_label_create(parent);
+    lv_obj_set_width(wifi_st_lab, 360);
     // lv_obj_set_style_text_color(wifi_st_lab, lv_color_hex(COLOR_TEXT), LV_PART_MAIN);
-    lv_obj_set_style_text_font(wifi_st_lab, &Font_Mono_Bold_30, LV_PART_MAIN);
+    lv_obj_set_style_text_font(wifi_st_lab, &Font_Mono_Bold_25, LV_PART_MAIN);
     lv_label_set_text(wifi_st_lab, (ui_if_epd_get_WIFI() ? "Wifi Connect" : "Wifi Disconnect"));
-    lv_obj_align(wifi_st_lab, LV_ALIGN_TOP_LEFT, 50, 100);
+    lv_obj_set_style_text_align(wifi_st_lab, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+    lv_obj_align(wifi_st_lab, LV_ALIGN_BOTTOM_RIGHT, -0, -190);
 
     if(ui_if_epd_get_WIFI()) {
         wifi_info_label_create(parent);
     }
 
+    lv_obj_t *label, *tips_label;
+    tips_label = lv_label_create(parent);
+    lv_obj_set_width(tips_label, LV_PCT(100));
+    lv_label_set_long_mode(tips_label, LV_LABEL_LONG_SCROLL);
+    lv_obj_set_style_text_color(tips_label, lv_color_black(), LV_PART_MAIN);
+    lv_label_set_text(tips_label,   "1. Scan the QR code to download `EspTouch`\n"
+                                    "2. Install and launch `EspTouch` APP\n"
+                                    "3. Make sure your phone is connected to WIFI\n"
+                                    "4. Tap the [EspTouch] option of the APP\n"
+                                    "5. Enter your WIFI password and click [confirm]\n"
+                                    "6. Finally, click [config wifi] on the ink screen\n"
+                                    "After that, wait for the network distribution to succeed!"
+                                    );
+    
+    lv_obj_set_style_text_font(tips_label, &Font_Mono_Bold_25, LV_PART_MAIN);
+    lv_obj_align(tips_label, LV_ALIGN_LEFT_MID, 50, -100);
+
+    const char *android_url = "https://github.com/EspressifApp/EsptouchForAndroid/releases/tag/v2.0.0/esptouch-v2.0.0.apk";
+    const char *ios_url     = "https://apps.apple.com/cn/app/espressif-esptouch/id1071176700";
+
+    lv_coord_t size            = 120;
+    lv_obj_t  *android_rq_code = lv_qrcode_create(parent, size, lv_color_black(), lv_color_white());
+    lv_qrcode_update(android_rq_code, android_url, strlen(android_url));
+    lv_obj_set_pos(android_rq_code, 340, 10);
+    lv_obj_align(android_rq_code, LV_ALIGN_LEFT_MID, 50, 100);
+
+    lv_obj_set_style_border_color(android_rq_code, lv_color_white(), 0);
+    lv_obj_set_style_border_width(android_rq_code, 5, 0);
+    label = lv_label_create(parent);
+    lv_label_set_text(label, "Android");
+    lv_obj_set_style_text_color(label, lv_color_black(), LV_PART_MAIN);
+    lv_obj_align_to(label, android_rq_code, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+
+    lv_obj_t *ios_rq_code = lv_qrcode_create(parent, size, lv_color_black(), lv_color_white());
+    lv_qrcode_update(ios_rq_code, ios_url, strlen(ios_url));
+    lv_obj_align_to(ios_rq_code, android_rq_code, LV_ALIGN_OUT_RIGHT_MID, 20, 0);
+
+    lv_obj_set_style_border_color(ios_rq_code, lv_color_white(), 0);
+    lv_obj_set_style_border_width(ios_rq_code, 5, 0);
+    label = lv_label_create(parent);
+    lv_label_set_text(label, "IOS");
+    lv_obj_set_style_text_color(label, lv_color_black(), LV_PART_MAIN);
+    lv_obj_align_to(label, ios_rq_code, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+
+    // config btn
+    lv_obj_t *btn = lv_btn_create(parent);
+    lv_obj_set_size(btn, 200, 60);
+    lv_obj_align(btn, LV_ALIGN_BOTTOM_MID, -20, -120);
+    lv_obj_set_style_radius(btn, 10, LV_PART_MAIN);
+    label = lv_label_create(btn);
+    lv_label_set_text(label, "Config Wifi");
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_obj_set_style_text_font(label, &Font_Mono_Bold_25, LV_PART_MAIN);
+    lv_obj_center(label);
+    lv_obj_add_event_cb(btn, wifi_config_event_handler, LV_EVENT_CLICKED, NULL);
+
+    
+
     //---------------------
-    scr_middle_line(parent);
+    // scr_middle_line(parent);
     // back
     scr_back_btn_create(parent, "Wifi", scr6_btn_event_cb);
 }

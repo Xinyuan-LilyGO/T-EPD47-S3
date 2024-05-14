@@ -9,8 +9,6 @@
 
 * [Switch to English](./README.md)
 
-
-
 ## :one:Product 🎁
 | Version |    v1.0 24-04-20    |
 |:-------:|:-------------------:|
@@ -20,15 +18,11 @@
 |  屏幕   | 960x540 16灰 墨水屏  |
 
 
-
 ## :two:快速开始 🎁
-首先配置WIFI，在文件 `examples\display_demo\display_demo.h` 下更改关于 WIFI 名和密码的宏定义，将下面的宏改为你自己的 WIFI 名和密码；
-~~~c
-#define WIFI_SSID "Your WiFi SSID"
-#define WIFI_PASSWORD "Your WiFi PASSWORD"
-~~~
 
-### 2.1 使用 PlatformIO
+上电后，点击进入 WIFI 界面，配置网络，就可以使用了；
+
+## :three:使用 PlatformIO
 
 工程使用 PlatformIO 开发，只要 clone 代码，编译下载就可以运行了；
 
@@ -51,3 +45,4 @@
 ![](./images/epd_lora.png)
 ![](./images/esp_sd.png)
 ![](./images/esp_test.png)
+![](./images/esp_wifi.png)

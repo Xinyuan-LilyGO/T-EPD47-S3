@@ -16,22 +16,18 @@
 ## :one:Product 🎁
 | Version |    v1.0 24-04-20    |
 |:-------:|:-------------------:|
-|  模块   |  ESP32-S3-WROOM-1   |
+|  module   |  ESP32-S3-WROOM-1   |
 |  Flash  |        16MB         |
 |  PSRAM  |         8MB         |
-|  屏幕   | 960x540 16灰 墨水屏  |
+|  screen   | 960x540 16 Gray ink screen  |
 
 
 
 ## :two:Quick Start 🎁
 
-Change the WIFI `SSID` and `PASSWORD` in the `examples\display_demo\display_demo.h` file
-~~~c
-#define WIFI_SSID "Your WiFi SSID"
-#define WIFI_PASSWORD "Your WiFi PASSWORD"
-~~~
+After power-on, click to enter the WIFI interface, configure the network, you can use;
 
-### 2.1 Use PlatformIO
+## :three:Use PlatformIO
 
 The project uses PlatformIO development, as long as clone code, compile and download can run;
 
@@ -53,3 +49,4 @@ If you are the first to use PlatformIO, you can try the following steps to insta
 ![](./images/epd_lora.png)
 ![](./images/esp_sd.png)
 ![](./images/esp_test.png)
+![](./images/esp_wifi.png)

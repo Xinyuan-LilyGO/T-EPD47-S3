@@ -152,23 +152,12 @@ bool disp_refr_is_busy = false;
 void disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
     if(disp_flush_enabled) {
+        static int refr_cnt = 0;
         uint16_t w = lv_area_get_width(area);
         uint16_t h = lv_area_get_height(area);
-        int i=0, j=0;
-        uint8_t *c  = (uint8_t *)color_p;
         lv_color32_t *t32 = (lv_color32_t *)color_p;
 
-#if LV_COLOR_DEPTH == 8
-        for(i = 0; i < (w * h) / 2; i++) {
-            uint8_t t1 = 0, t2 = 0, tmp = 0;
-            t1 = c[j + 0] / 16;
-            t2 = c[j + 1] / 16;
-            tmp = ((t1 << 4) & 0xF0) | (t2 & 0x0F);
-            c[i] = tmp;
-            j += 2;
-        }
-#elif LV_COLOR_DEPTH == 16
-        for(i = 0; i < (w * h) / 2; i++) {
+        for(int i = 0; i < (w * h) / 2; i++) {
 
             lv_color8_t ret;
             LV_COLOR_SET_R8(ret, LV_COLOR_GET_R(*t32) >> 5); /*8 - 3  = 5*/
@@ -177,16 +166,7 @@ void disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
             decodebuffer[i] = ret.full;
             t32++;
         }
-#elif LV_COLOR_DEPTH == 32
-        for (int y = area->y1; y <= area->y2; y++) {
-            for (int x = area->x1; x <= area->x2; x++) {
-                uint8_t gray = (color_p->ch.red * 38 + color_p->ch.green * 75 + color_p->ch.blue * 15) >> 7;
-
-                color_p++;
-            }
-        }
-#endif
-        // Serial.printf("dips x=%d, y=%d, w=%d, h=%d\n", area->x1, area->y1, w, h);
+        Serial.printf("[disp_flush]refr_cnt: %d\n", refr_cnt++);
     }
     /* Inform the graphics library that you are ready with the flushing */
     lv_disp_flush_ready(disp);
@@ -198,8 +178,9 @@ void disp_refrensh_cb(lv_timer_t *t)
     disp_refr_is_busy = false;
 
     epd_poweron();
-    epd_clear();
-    epd_draw_image(epd_full_screen(), (uint8_t *)decodebuffer, BLACK_ON_WHITE);
+    // epd_clear();
+    epd_clear_area_cycles(epd_full_screen(), 1, 2);
+    epd_draw_grayscale_image(epd_full_screen(), (uint8_t *)decodebuffer);
     epd_poweroff();
 }
 
@@ -231,10 +212,6 @@ void lv_port_disp_init(void)
     lv_init();
 
     static lv_disp_draw_buf_t draw_buf;
-
-    // lv_color_t *lv_disp_buf_p = (lv_color_t *)ps_calloc(sizeof(lv_color_t), DISP_BUF_SIZE);
-    // lv_color_t *lv_disp_buf_p1 = (lv_color_t *)ps_calloc(sizeof(lv_color_t), DISP_BUF_SIZE);
-    // lv_disp_draw_buf_init(&draw_buf, lv_disp_buf_p, lv_disp_buf_p1, DISP_BUF_SIZE);
 
     lv_color_t *lv_disp_buf_p = (lv_color_t *)ps_calloc(sizeof(lv_color_t), DISP_BUF_SIZE);
     decodebuffer = (uint8_t *)ps_calloc(sizeof(uint8_t), DISP_BUF_SIZE);
@@ -457,7 +434,7 @@ void setup()
     epd_init();
 
     // SD
-    SPI.begin(BOARD_SPI_SCLK, BOARD_SPI_MISO, BOARD_SPI_MOSI, -1);
+    SPI.begin(BOARD_SPI_SCLK, BOARD_SPI_MISO, BOARD_SPI_MOSI);
     sd_is_init = SD.begin(SD_CS);
 
     // LORA
@@ -476,24 +453,8 @@ void setup()
         }
     }
 
-    // RTC
-    Wire.beginTransmission(PCF8563_SLAVE_ADDRESS);
-    if (Wire.endTransmission() == 0)
-    {
-        rtc.begin(Wire, PCF8563_SLAVE_ADDRESS, BOARD_SDA, BOARD_SCL);
-        rtc_is_init = true;
-    }
-
-    // TOUCH
-    uint8_t touchAddress = 0x14;
-    Wire.beginTransmission(0x5D);
-    if (Wire.endTransmission() == 0)
-    {
-        touchAddress = 0x5D;
-    }
-
     touch.setPins(TOUCH_RST, TOUCH_INT);
-    if (touch.begin(Wire, touchAddress, BOARD_SDA, BOARD_SCL))
+    if (touch.begin(Wire, 0x5D, BOARD_SDA, BOARD_SCL))
     {
         touch.setMaxCoordinates(EPD_WIDTH, EPD_HEIGHT);
         touch.setSwapXY(true);
@@ -502,15 +463,21 @@ void setup()
         Serial.printf("touchOnline \n");
     }
 
+    // RTC
+    Wire.beginTransmission(PCF8563_SLAVE_ADDRESS);
+    if (Wire.endTransmission() == 0)
+    {
+        rtc.begin(Wire, PCF8563_SLAVE_ADDRESS, BOARD_SDA, BOARD_SCL);
+        rtc_is_init = true;
+    }
+
     Serial.printf("Touch init %s\n", touchOnline? "PASS" : "FAIL");
     Serial.printf("SD card init %s\n", sd_is_init? "PASS" : "FAIL");
     Serial.printf("RTC init %s\n", rtc_is_init? "PASS" : "FAIL");
     Serial.printf("LORA init %s\n", lora_is_init? "PASS" : "FAIL");
 
     lv_port_disp_init();
-    // epd_poweron();
-    // epd_clear();
-    
+
     ui_epd47_entry();
     disp_manual_refr(500);
 

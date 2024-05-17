@@ -617,7 +617,7 @@ static void create3(lv_obj_t *parent) {
         lv_label_set_text(sd_info, "SD GALLERY"); 
     } else {
         sd_info = lv_label_create(parent);
-        lv_obj_set_style_text_font(sd_info, &Font_Mono_Bold_90, LV_PART_MAIN);
+        lv_obj_set_style_text_font(sd_info, &Font_Mono_Bold_30, LV_PART_MAIN);
         lv_label_set_text(sd_info, "NO FIND SD CARD!"); 
     }
 
@@ -1034,8 +1034,6 @@ static void create6(lv_obj_t *parent) {
     lv_obj_center(label);
     lv_obj_add_event_cb(btn, wifi_config_event_handler, LV_EVENT_CLICKED, NULL);
 
-    
-
     //---------------------
     // scr_middle_line(parent);
     // back
@@ -1080,6 +1078,6 @@ void ui_epd47_entry(void)
     scr_mgr_register(SCREEN5_ID, &screen5); // test
     scr_mgr_register(SCREEN6_ID, &screen6); // wifi
 
-    scr_mgr_switch(SCREEN0_ID, false); // set root screen
+    scr_mgr_switch(SCREEN5_ID, false); // set root screen
     scr_mgr_set_anim(LV_SCR_LOAD_ANIM_NONE, LV_SCR_LOAD_ANIM_NONE, LV_SCR_LOAD_ANIM_NONE);
 }

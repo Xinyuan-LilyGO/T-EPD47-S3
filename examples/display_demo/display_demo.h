@@ -36,17 +36,6 @@ extern void lora_set_mode(int mode);
 extern bool lora_receive(String *str);
 extern void lora_transmit(const char *str);
 
-// eeprom
-#define EEPROM_UPDATA_FLAG_NUM  0xAA
-#define WIFI_SSID_EEPROM_ADDR   (1)
-#define WIFI_PSWD_EEPROM_ADDR   (WIFI_SSID_EEPROM_ADDR + WIFI_SSID_MAX_LEN)
-#define UI_THEME_EEPROM_ADDR    (WIFI_PSWD_EEPROM_ADDR + WIFI_PSWD_MAX_LEN)
-#define UI_ROTATION_EEPROM_ADDR (UI_THEME_EEPROM_ADDR + 1)
-#define EEPROM_SIZE_MAX 64
-
-void eeprom_wr(int addr, uint8_t val);
-void eeprom_wr_wifi(const char *ssid, uint16_t ssid_len, const char *pwsd, uint16_t pwsd_len);
-
 // wifi
 #define WIFI_SSID_MAX_LEN 30
 #define WIFI_PSWD_MAX_LEN 30
@@ -55,5 +44,22 @@ extern struct tm timeinfo;
 extern char wifi_ssid[WIFI_SSID_MAX_LEN];
 extern char wifi_password[WIFI_PSWD_MAX_LEN];
 
+// eeprom
+#define EEPROM_UPDATA_FLAG_NUM    0xAA
+#define WIFI_SSID_EEPROM_ADDR     (1)
+#define WIFI_PSWD_EEPROM_ADDR     (WIFI_SSID_EEPROM_ADDR + WIFI_SSID_MAX_LEN)
+// #define UI_THEME_EEPROM_ADDR      (WIFI_PSWD_EEPROM_ADDR + WIFI_PSWD_MAX_LEN)
+#define UI_BACKLIGHT_EEPROM_ADDR  (WIFI_PSWD_EEPROM_ADDR + WIFI_PSWD_MAX_LEN)
+#define UI_REFR_CYCLE_EEPROM_ADDR (UI_BACKLIGHT_EEPROM_ADDR + 1)
+#define UI_REFR_TIMES_EEPROM_ADDR (UI_REFR_CYCLE_EEPROM_ADDR + 1)
+#define EEPROM_SIZE_MAX 64
+
+void eeprom_wr(int addr, uint8_t val);
+void eeprom_wr_wifi(const char *ssid, uint16_t ssid_len, const char *pwsd, uint16_t pwsd_len);
+
+
 // refresh ink
 extern void disp_manual_refr(uint16_t time);
+extern uint16_t refr_backlight;
+extern uint16_t refr_cycle;
+extern uint16_t refr_times;

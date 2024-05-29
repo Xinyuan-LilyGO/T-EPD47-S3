@@ -42,6 +42,17 @@ void set_receive_flag(void){
     receivedFlag = true;
 }
 
+// lvgl
+#define DISP_BUF_SIZE (EPD_WIDTH*EPD_HEIGHT)
+uint8_t *decodebuffer = NULL;
+uint16_t refr_backlight = 0;
+uint16_t refr_cycle = 10;
+uint16_t refr_times = 4;
+lv_timer_t *get_curr_data_timer = NULL;
+
+volatile bool disp_flush_enabled = true;
+bool disp_refr_is_busy = false;
+
 // eeprom
 void eeprom_default_val(void)
 {
@@ -130,24 +141,21 @@ void eeprom_init()
         
         Serial.printf("eeprom SSID: %s\n", wifi_ssid);
         Serial.printf("eeprom PWSD: %s\n", wifi_password);
-        uint8_t theme = EEPROM.read(UI_THEME_EEPROM_ADDR);
-        uint8_t rotation = EEPROM.read(UI_ROTATION_EEPROM_ADDR);
-
-        // setting_theme = theme;
-        // display_rotation = (rotation == 1 ? 1 : 3);d
+        // uint8_t theme = EEPROM.read(UI_THEME_EEPROM_ADDR);
+        uint8_t backlight = EEPROM.read(UI_BACKLIGHT_EEPROM_ADDR);
+        uint8_t cycle = EEPROM.read(UI_REFR_CYCLE_EEPROM_ADDR);
+        uint8_t times = EEPROM.read(UI_REFR_TIMES_EEPROM_ADDR);
         
-        Serial.printf("eeprom theme: %d\n", theme);
-        Serial.printf("eeprom rotation: %d\n", rotation);
+        // Serial.printf("eeprom theme: %d\n", theme);
+        Serial.printf("eeprom backlight: %d\n", backlight);
+        Serial.printf("eeprom refr_cycle: %d\n", refr_cycle);
+        Serial.printf("eeprom refr_times: %d\n", refr_times);
+
+        refr_backlight = backlight;
+        refr_cycle = cycle;
+        refr_times = times;
     }
 }
-
-// lvgl
-#define DISP_BUF_SIZE (EPD_WIDTH*EPD_HEIGHT)
-uint8_t *decodebuffer = NULL;
-lv_timer_t *get_curr_data_timer = NULL;
-
-volatile bool disp_flush_enabled = true;
-bool disp_refr_is_busy = false;
 
 void disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
@@ -179,7 +187,7 @@ void disp_refrensh_cb(lv_timer_t *t)
 
     epd_poweron();
     // epd_clear();
-    epd_clear_area_cycles(epd_full_screen(), 1, 2);
+    epd_clear_area_cycles(epd_full_screen(), refr_times, refr_cycle);
     epd_draw_grayscale_image(epd_full_screen(), (uint8_t *)decodebuffer);
     epd_poweroff();
 }
@@ -424,7 +432,7 @@ void setup()
     Serial.begin(115200);
 
     pinMode(BL_EN, OUTPUT);
-    analogWrite(BL_EN, 0);
+    analogWrite(BL_EN, refr_backlight);
 
     eeprom_init();
 
@@ -438,7 +446,7 @@ void setup()
     sd_is_init = SD.begin(SD_CS);
 
     // LORA
-    lora_is_init = lora_init();
+    // lora_is_init = lora_init();
     
     // I2C Scan
     byte error, address;

@@ -75,6 +75,35 @@ void ui_if_epd_read_from_SD(void)
 void ui_if_epd_set_light(uint8_t light)
 {
     analogWrite(BL_EN, light);
+    refr_backlight = light;
+    eeprom_wr(UI_BACKLIGHT_EEPROM_ADDR, light);
+}
+
+void ui_port_set_refr_cycle(uint16_t cycle) 
+{
+    refr_cycle = cycle;
+    eeprom_wr(UI_REFR_CYCLE_EEPROM_ADDR, (uint8_t)cycle);
+}
+
+void ui_port_set_refr_times(uint16_t times)
+{
+    refr_times = times;
+    eeprom_wr(UI_REFR_TIMES_EEPROM_ADDR, (uint8_t)times);
+}
+
+uint16_t ui_port_get_light(void)
+{
+    return refr_backlight;
+}
+
+uint16_t ui_port_get_refr_cycle(void) 
+{
+    return refr_cycle;
+}
+
+uint16_t ui_port_get_refr_times(void)
+{
+    return refr_times;
 }
 //************************************[ screen 5 ]****************************************** test
 bool ui_if_epd_get_SD(void) { return sd_is_init; }

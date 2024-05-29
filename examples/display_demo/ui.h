@@ -59,6 +59,11 @@ void ui_if_epd_set_imgbtn(const char *text, int text_len, int type);
 void ui_if_epd_read_from_SD(void);
 // setting
 void ui_if_epd_set_light(uint8_t light);
+void ui_port_set_refr_cycle(uint16_t cycle);
+void ui_port_set_refr_times(uint16_t times);
+uint16_t ui_port_get_light(void);
+uint16_t ui_port_get_refr_cycle(void);
+uint16_t ui_port_get_refr_times(void);
 // test
 bool ui_if_epd_get_SD(void);
 bool ui_if_epd_get_RTC(void);

@@ -22,6 +22,7 @@ bool wifi_is_connect = false;
 bool wifi_eeprom_upd = false;
 struct tm timeinfo = {0};
 
+BQ25896  battery_25896(Wire);
 SensorPCF8563 rtc;
 TouchDrvGT911 touch;
 
@@ -198,6 +199,33 @@ void disp_manual_refr(uint16_t time)
 {
     if(disp_refr_is_busy == false) {
         lv_timer_create(disp_refrensh_cb, time, NULL);
+        disp_refr_is_busy = true;
+    }
+}
+
+uint32_t epd_refr_data = 0;
+
+void disp_refrensh_cycle_cb(lv_timer_t *t)
+{
+    uint16_t cycle = (epd_refr_data >> 16) & 0x0000FFFF;
+    uint16_t times = (epd_refr_data & 0x0000FFFF);
+
+    lv_timer_del(t);
+    disp_refr_is_busy = false;
+
+    epd_poweron();
+    // epd_clear();
+    Serial.printf("t=%d, c=%d\n", times, cycle);
+    epd_clear_area_cycles(epd_full_screen(), times, cycle);
+    epd_draw_grayscale_image(epd_full_screen(), (uint8_t *)decodebuffer);
+    epd_poweroff();
+}
+
+void disp_manual_refr_cycle(uint16_t time, uint16_t cycle, uint16_t times)
+{
+    epd_refr_data = ((cycle << 16) & 0xFFFF0000) | times;
+    if(disp_refr_is_busy == false) {
+        lv_timer_create(disp_refrensh_cycle_cb, time, &epd_refr_data);
         disp_refr_is_busy = true;
     }
 }
@@ -492,6 +520,7 @@ void setup()
     if (Wire.endTransmission() == 0)
     {
         bq25896_is_init = true;
+        battery_25896.begin();
     }
 
     // BQ27220 --- 0x55

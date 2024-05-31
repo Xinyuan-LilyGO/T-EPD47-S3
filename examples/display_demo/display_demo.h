@@ -16,6 +16,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <EEPROM.h>
+#include "BQ25896.h"
 
 // define 
 #define WIFI_SSID "xinyuandianzi"
@@ -30,6 +31,10 @@ extern bool bq25896_is_init;
 extern bool bq27220_is_init;
 extern bool wifi_is_connect;
 
+// sensor
+extern BQ25896 battery_25896;
+extern SensorPCF8563 rtc;
+extern TouchDrvGT911 touch;
 
 // lora
 #define LORA_MODE_SEND 0
@@ -63,6 +68,7 @@ void eeprom_wr_wifi(const char *ssid, uint16_t ssid_len, const char *pwsd, uint1
 
 // refresh ink
 extern void disp_manual_refr(uint16_t time);
+extern void disp_manual_refr_cycle(uint16_t time, uint16_t cycle, uint16_t times);
 extern uint16_t refr_backlight;
 extern uint16_t refr_cycle;
 extern uint16_t refr_times;

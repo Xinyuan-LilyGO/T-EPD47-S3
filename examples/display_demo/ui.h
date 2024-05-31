@@ -47,6 +47,8 @@ enum {
 void ui_epd47_entry(void);
 // week fun (ui interface)
 void ui_if_epd_refr(void);
+void ui_epd_refr(uint16_t time, uint16_t cycle, uint16_t times);
+
 void ui_if_epd_get_time(uint8_t *h, uint8_t *m, uint8_t *s);
 void ui_if_epd_get_data(uint8_t *year, uint8_t *month, uint8_t *day, uint8_t *week);
 // LORA
@@ -78,9 +80,10 @@ const char *ui_if_epd_get_WIFI_pwd(void);
 /* 25896 */
 bool battery_25896_is_vaild(void);
 bool battery_25896_is_chr(void);
-char * battery_25896_get_VSYS_ST(void);
-char * battery_25896_get_VBUS_ST(void);
-char * battery_25896_get_CHG_ERR(void);
+void battery_25896_refr(void);
+const char * battery_25896_get_VSYS_ST(void);
+const char * battery_25896_get_VBUS_ST(void);
+const char * battery_25896_get_CHG_ERR(void);
 float battery_25896_get_VBUS(void);
 float battery_25896_get_VSYS(void);
 float battery_25896_get_VBAT(void);

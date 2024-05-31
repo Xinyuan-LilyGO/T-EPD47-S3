@@ -9,6 +9,11 @@ void ui_if_epd_refr(uint16_t time)
     disp_manual_refr(time);
 }
 
+void ui_epd_refr(uint16_t time, uint16_t cycle, uint16_t times)
+{
+    disp_manual_refr_cycle(time, cycle, times);
+}
+
 //************************************[ screen 1 ]****************************************** clock
 void ui_if_epd_get_time(uint8_t *h, uint8_t *m, uint8_t *s) 
 {
@@ -130,62 +135,93 @@ const char *ui_if_epd_get_WIFI_pwd(void)
 /* 25896 */
 bool battery_25896_is_vaild(void)
 {
-    // return bq25896_is_init;
-    return true;
+    return bq25896_is_init;
 }
 
 bool battery_25896_is_chr(void)
 {
-    return false;
+    if(battery_25896.getCHG_STATUS() == BQ25896::CHG_STAT::NOT_CHARGING) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
-char * battery_25896_get_VSYS_ST(void)
+void battery_25896_refr(void)
 {
-    return "Nomal";
+    battery_25896.properties();
 }
-char * battery_25896_get_VBUS_ST(void) 
+
+const char * battery_25896_get_VSYS_ST(void)
 {
-    return "Nomal";
+    const char *st = (battery_25896.getVSYS_STATUS()==BQ25896::VSYS_STAT::IN_VSYSMIN ? "BAT < VSYSMIN" : "BAT > VSYSMIN");
+    return st;
 }
-char * battery_25896_get_CHG_ERR(void)
+const char * battery_25896_get_VBUS_ST(void) 
 {
-    return "Nomal";
+    if(battery_25896.getVBUS_STATUS()==BQ25896::VBUS_STAT::NO_INPUT) {
+        return "Not input";
+    } else if(battery_25896.getVBUS_STATUS()==BQ25896::VBUS_STAT::USB_HOST) {
+        return "USB host";
+    } else if(battery_25896.getVBUS_STATUS()==BQ25896::VBUS_STAT::ADAPTER) {
+        return "Adapter";
+    } else {
+        return "OTG";
+    }
+}
+const char * battery_25896_get_CHG_ERR(void)
+{
+    if(battery_25896.getCHG_Fault_STATUS()==BQ25896::CHG_FAULT::NORMAL) {
+        return "Normal";
+    } else if(battery_25896.getCHG_Fault_STATUS()==BQ25896::CHG_FAULT::INPUT_FAULT) {
+        return "Input Fault";
+    } else if(battery_25896.getCHG_Fault_STATUS()==BQ25896::CHG_FAULT::THERMAL_SHUTDOWN) {
+        return "Thermal Shutdown";
+    } else {
+        return "TIMER_EXPIRED";
+    }
 }
 float battery_25896_get_VBUS(void)
 {
-    static float vsys = 0;
-    vsys+=0.1;
-    return 4.23+vsys;
+    // static float vsys = 0;
+    // vsys+=0.1;
+    // return 4.23+vsys;
+    return battery_25896.getVBUS();
 }
 float battery_25896_get_VSYS(void) 
 {
-    static float vsys = 0;
-    vsys+=0.2;
-    return 4.23+vsys;
+    // static float vsys = 0;
+    // vsys+=0.2;
+    // return 4.23+vsys;
+    return battery_25896.getVSYS();
 }
 float battery_25896_get_VBAT(void)
 {
-    static float vsys = 0;
-    vsys+=0.3;
-    return 4.23+vsys;
+    // static float vsys = 0;
+    // vsys+=0.3;
+    // return 4.23+vsys;
+    return battery_25896.getVBAT();
 }
 float battery_25896_get_ICHG(void)
 {
-    static float vsys = 0;
-    vsys+=0.4;
-    return 4.23+vsys;
+    // static float vsys = 0;
+    // vsys+=0.4;
+    // return 4.23+vsys;
+    return battery_25896.getICHG();
 }
 float battery_25896_get_TEMP(void)
 {
-    static float vsys = 0;
-    vsys+=0.5;
-    return 4.23+vsys;
+    // static float vsys = 0;
+    // vsys+=0.5;
+    // return 4.23+vsys;
+    return battery_25896.getTemperature();
 }
 float battery_25896_get_TSPCT(void)
 {
-    static float vsys = 0;
-    vsys=0.6;
-    return 4.23+vsys;
+    // static float vsys = 0;
+    // vsys=0.6;
+    // return 4.23+vsys;
+    return battery_25896.getTSPCT();
 }
 
 /* 27220 */

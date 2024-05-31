@@ -1189,6 +1189,8 @@ static void battery_data_refr(void)
     char buf[line_max];
     // BQ25896
     if(battery_25896_is_vaild()) {
+        battery_25896_refr();
+
         battery_set_line(batt_left[0], "Charge:", (battery_25896_is_chr() == true ? "Charging" : "Not charged"));
 
         lv_snprintf(buf, line_max, "%.2fV", battery_25896_get_VBUS());
@@ -1209,7 +1211,7 @@ static void battery_data_refr(void)
         lv_snprintf(buf, line_max, "%.2fmA", battery_25896_get_ICHG());
         battery_set_line(batt_left[6], "ICHG:", buf);
 
-        lv_snprintf(buf, line_max, "%.2fK", battery_25896_get_TEMP());
+        lv_snprintf(buf, line_max, "%.2f", battery_25896_get_TEMP());
         battery_set_line(batt_left[7], "TEMP:", buf);
 
         lv_snprintf(buf, line_max, "%.2f", battery_25896_get_TSPCT());
@@ -1256,7 +1258,8 @@ static void battery_data_refr(void)
 static void batt_refr_timer_event(lv_timer_t *t)
 {
     battery_data_refr();
-    ui_if_epd_refr(EPD_REFRESH_TIME);
+    // ui_if_epd_refr(EPD_REFRESH_TIME);
+    ui_epd_refr(EPD_REFRESH_TIME, 1, 1);
 }
 
 static lv_obj_t * scr7_create_label(lv_obj_t *parent)

@@ -74,4 +74,29 @@ bool ui_if_epd_get_WIFI(void);
 String ui_if_epd_get_WIFI_ip(void);
 const char *ui_if_epd_get_WIFI_ssid(void);
 const char *ui_if_epd_get_WIFI_pwd(void);
+// battery
+/* 25896 */
+bool battery_25896_is_vaild(void);
+bool battery_25896_is_chr(void);
+char * battery_25896_get_VSYS_ST(void);
+char * battery_25896_get_VBUS_ST(void);
+char * battery_25896_get_CHG_ERR(void);
+float battery_25896_get_VBUS(void);
+float battery_25896_get_VSYS(void);
+float battery_25896_get_VBAT(void);
+float battery_25896_get_ICHG(void);
+float battery_25896_get_TEMP(void);
+float battery_25896_get_TSPCT(void);
+/* 27220 */
+bool battery_27220_is_vaild(void);
+bool battery_27220_is_chr(void);
+float battery_27220_get_VOLT(void);
+float battery_27220_get_VOLT_CHG(void);
+float battery_27220_get_CURR_ARG(void);
+float battery_27220_get_CURR_INS(void);
+float battery_27220_get_CURR_STD(void);
+float battery_27220_get_CURR_CHG(void);
+float battery_27220_get_TEMP(void);
+float battery_27220_get_BATT_CAP(void);
+float battery_27220_get_BATT_CAP_FULL(void);
 #endif /* __UI_EPD47H__ */

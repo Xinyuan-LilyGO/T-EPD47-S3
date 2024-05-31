@@ -26,7 +26,10 @@ extern bool sd_is_init;
 extern bool rtc_is_init;
 extern bool lora_is_init;
 extern bool touchOnline;
+extern bool bq25896_is_init;
+extern bool bq27220_is_init;
 extern bool wifi_is_connect;
+
 
 // lora
 #define LORA_MODE_SEND 0

@@ -7,6 +7,8 @@ bool sd_is_init = false;
 bool rtc_is_init = false;
 bool lora_is_init = false;
 bool touchOnline = false;
+bool bq25896_is_init = false;
+bool bq27220_is_init = false;
 
 // wifi
 char wifi_ssid[WIFI_SSID_MAX_LEN] = {0};
@@ -145,15 +147,15 @@ void eeprom_init()
         uint8_t backlight = EEPROM.read(UI_BACKLIGHT_EEPROM_ADDR);
         uint8_t cycle = EEPROM.read(UI_REFR_CYCLE_EEPROM_ADDR);
         uint8_t times = EEPROM.read(UI_REFR_TIMES_EEPROM_ADDR);
-        
-        // Serial.printf("eeprom theme: %d\n", theme);
-        Serial.printf("eeprom backlight: %d\n", backlight);
-        Serial.printf("eeprom refr_cycle: %d\n", refr_cycle);
-        Serial.printf("eeprom refr_times: %d\n", refr_times);
 
         refr_backlight = backlight;
         refr_cycle = cycle;
         refr_times = times;
+        
+        // Serial.printf("eeprom theme: %d\n", theme);
+        Serial.printf("eeprom backlight: %d\n", refr_backlight);
+        Serial.printf("eeprom refr_cycle: %d\n", refr_cycle);
+        Serial.printf("eeprom refr_times: %d\n", refr_times);
     }
 }
 
@@ -174,7 +176,7 @@ void disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
             decodebuffer[i] = ret.full;
             t32++;
         }
-        Serial.printf("[disp_flush]refr_cnt: %d\n", refr_cnt++);
+        // Serial.printf("[disp_flush]refr_cnt: %d\n", refr_cnt++);
     }
     /* Inform the graphics library that you are ready with the flushing */
     lv_disp_flush_ready(disp);
@@ -245,6 +247,7 @@ void lv_port_disp_init(void)
 
 static void get_curr_time(lv_timer_t *t)
 {
+    static int cnt = 0;
     if(wifi_is_connect == true){
         if (!getLocalTime(&timeinfo)){
             Serial.println("Failed to obtain time");
@@ -431,9 +434,6 @@ void setup()
 {
     Serial.begin(115200);
 
-    pinMode(BL_EN, OUTPUT);
-    analogWrite(BL_EN, refr_backlight);
-
     eeprom_init();
 
     wifi_init();
@@ -446,9 +446,15 @@ void setup()
     sd_is_init = SD.begin(SD_CS);
 
     // LORA
-    // lora_is_init = lora_init();
+    lora_is_init = lora_init();
     
     // I2C Scan
+    /**
+     * 0x51 --- RTC
+     * 0x5D --- Touch
+     * 0x6B --- BQ25896
+     * 0x55 --- BQ27220
+    */
     byte error, address;
     int nDevices = 0;
     Wire.begin(BOARD_SDA, BOARD_SCL);
@@ -461,6 +467,7 @@ void setup()
         }
     }
 
+    // Touch --- 0x5D
     touch.setPins(TOUCH_RST, TOUCH_INT);
     if (touch.begin(Wire, 0x5D, BOARD_SDA, BOARD_SCL))
     {
@@ -471,12 +478,27 @@ void setup()
         Serial.printf("touchOnline \n");
     }
 
-    // RTC
+    // RTC --- 0x51
     Wire.beginTransmission(PCF8563_SLAVE_ADDRESS);
     if (Wire.endTransmission() == 0)
     {
         rtc.begin(Wire, PCF8563_SLAVE_ADDRESS, BOARD_SDA, BOARD_SCL);
+        rtc.setDateTime(2022, 6, 30, 0, 0, 0);
         rtc_is_init = true;
+    }
+
+    // BQ25896 --- 0x6B
+    Wire.beginTransmission(0x6B);
+    if (Wire.endTransmission() == 0)
+    {
+        bq25896_is_init = true;
+    }
+
+    // BQ27220 --- 0x55
+    Wire.beginTransmission(0x55);
+    if (Wire.endTransmission() == 0)
+    {
+        bq27220_is_init = true;
     }
 
     Serial.printf("Touch init %s\n", touchOnline? "PASS" : "FAIL");
@@ -488,6 +510,9 @@ void setup()
 
     ui_epd47_entry();
     disp_manual_refr(500);
+
+    pinMode(BL_EN, OUTPUT);
+    analogWrite(BL_EN, refr_backlight);
 
     // get_curr_time(NULL);
     get_curr_data_timer = lv_timer_create(get_curr_time, 5000, NULL);

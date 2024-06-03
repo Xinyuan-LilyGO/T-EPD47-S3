@@ -50,8 +50,8 @@ void scr_middle_line(lv_obj_t *parent)
 }
 //************************************[ screen 0 ]****************************************** menu
 #if 1
-#define MENU_ICON_NUM  (7)
-#define MENU_CONT_HIGH (LCD_VER_SIZE * 0.80)
+#define MENU_ICON_NUM  (8)
+#define MENU_CONT_HIGH (LCD_VER_SIZE * 0.84)
 
 /*** UI interfavce ***/
 void __attribute__((weak)) ui_if_epd_refr(uint16_t time) {}
@@ -71,6 +71,7 @@ const struct menu_icon icon_buf[MENU_ICON_NUM] = {
     {&img_test, "test"},
     {&img_wifi, "wifi"},
     {&img_battery, "battery"},
+    {&img_shutdown, "shutdown"},
 };
 
 static void menu_btn_event(lv_event_t *e)
@@ -87,6 +88,7 @@ static void menu_btn_event(lv_event_t *e)
             case 4: scr_mgr_push(SCREEN5_ID, false); ui_if_epd_refr(EPD_REFRESH_TIME); break;
             case 5: scr_mgr_push(SCREEN6_ID, false); ui_if_epd_refr(EPD_REFRESH_TIME); break;
             case 6: scr_mgr_push(SCREEN7_ID, false); ui_if_epd_refr(EPD_REFRESH_TIME); break;
+            case 7: scr_mgr_push(SCREEN8_ID, false); ui_if_epd_refr(EPD_REFRESH_TIME); break;
             default: break;
         }
     }
@@ -1226,10 +1228,10 @@ static void battery_data_refr(void)
     if(battery_27220_is_vaild()) {
         battery_set_line(batt_right[0], "Charge:", (battery_27220_is_chr() == true? "Charging" : "Not charged"));
 
-        lv_snprintf(buf, line_max, "%.2fV", battery_27220_get_VOLT());
+        lv_snprintf(buf, line_max, "%.2fV", battery_27220_get_VOLT()/1000);
         battery_set_line(batt_right[1], "VOLT:", buf);
 
-        lv_snprintf(buf, line_max, "%.2fV", battery_27220_get_VOLT_CHG());
+        lv_snprintf(buf, line_max, "%.2fV", battery_27220_get_VOLT_CHG()/1000);
         battery_set_line(batt_right[2], "VOLT Charge:", buf);
 
         lv_snprintf(buf, line_max, "%.2fmA", battery_27220_get_CURR_ARG());
@@ -1391,8 +1393,47 @@ static scr_lifecycle_t screen7 = {
     .exit  = exit7,
     .destroy = destroy7,
 };
-#endif
 #undef line_max
+#endif
+//************************************[ screen 8 ]****************************************** shutdown
+#if 1
+
+static void scr8_btn_event_cb(lv_event_t * e)
+{
+    if(e->code == LV_EVENT_CLICKED){
+        ui_if_epd_refr(EPD_REFRESH_TIME);
+        scr_mgr_switch(SCREEN0_ID, false);
+    }
+}
+
+static void create8(lv_obj_t *parent)
+{
+
+    lv_obj_t * label = lv_label_create(parent);
+    lv_label_set_text(label, "Shoutdown");
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_obj_set_style_text_font(label, &Font_Mono_Bold_25, LV_PART_MAIN);
+    lv_obj_center(label);
+
+    // back
+    scr_back_btn_create(parent, "Wifi", scr8_btn_event_cb);
+}
+
+static void entry8(void) {
+}
+static void exit8(void) {
+}
+static void destroy8(void) { 
+
+}
+
+static scr_lifecycle_t screen8 = {
+    .create = create8,
+    .entry = entry8,
+    .exit  = exit8,
+    .destroy = destroy8,
+};
+#endif
 //************************************[ UI ENTRY ]******************************************
 void ui_epd47_entry(void)
 {
@@ -1408,7 +1449,8 @@ void ui_epd47_entry(void)
     scr_mgr_register(SCREEN4_ID, &screen4); // setting
     scr_mgr_register(SCREEN5_ID, &screen5); // test
     scr_mgr_register(SCREEN6_ID, &screen6); // wifi
-    scr_mgr_register(SCREEN7_ID, &screen7); // wifi
+    scr_mgr_register(SCREEN7_ID, &screen7); // battery
+    scr_mgr_register(SCREEN8_ID, &screen8); // battery
 
     scr_mgr_switch(SCREEN0_ID, false); // set root screen
     scr_mgr_set_anim(LV_SCR_LOAD_ANIM_NONE, LV_SCR_LOAD_ANIM_NONE, LV_SCR_LOAD_ANIM_NONE);

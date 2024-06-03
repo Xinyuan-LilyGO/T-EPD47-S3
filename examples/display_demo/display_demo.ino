@@ -22,7 +22,8 @@ bool wifi_is_connect = false;
 bool wifi_eeprom_upd = false;
 struct tm timeinfo = {0};
 
-BQ25896  battery_25896(Wire);
+BQ25896 battery_25896(Wire);
+BQ27220 bq27220;
 SensorPCF8563 rtc;
 TouchDrvGT911 touch;
 
@@ -177,7 +178,7 @@ void disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
             decodebuffer[i] = ret.full;
             t32++;
         }
-        // Serial.printf("[disp_flush]refr_cnt: %d\n", refr_cnt++);
+        Serial.printf("[disp_flush]refr_cnt: %d\n", refr_cnt++);
     }
     /* Inform the graphics library that you are ready with the flushing */
     lv_disp_flush_ready(disp);
@@ -529,6 +530,8 @@ void setup()
     {
         bq27220_is_init = true;
     }
+
+    epd_poweroff();
 
     Serial.printf("Touch init %s\n", touchOnline? "PASS" : "FAIL");
     Serial.printf("SD card init %s\n", sd_is_init? "PASS" : "FAIL");

@@ -23,6 +23,7 @@ LV_IMG_DECLARE(img_PNG)
 LV_IMG_DECLARE(img_JPG)
 LV_IMG_DECLARE(img_BMP)
 LV_IMG_DECLARE(img_battery)
+LV_IMG_DECLARE(img_shutdown)
 
 
 // font

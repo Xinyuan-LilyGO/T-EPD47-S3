@@ -183,110 +183,73 @@ const char * battery_25896_get_CHG_ERR(void)
 }
 float battery_25896_get_VBUS(void)
 {
-    // static float vsys = 0;
-    // vsys+=0.1;
-    // return 4.23+vsys;
     return battery_25896.getVBUS();
 }
 float battery_25896_get_VSYS(void) 
 {
-    // static float vsys = 0;
-    // vsys+=0.2;
-    // return 4.23+vsys;
     return battery_25896.getVSYS();
 }
 float battery_25896_get_VBAT(void)
 {
-    // static float vsys = 0;
-    // vsys+=0.3;
-    // return 4.23+vsys;
     return battery_25896.getVBAT();
 }
 float battery_25896_get_ICHG(void)
 {
-    // static float vsys = 0;
-    // vsys+=0.4;
-    // return 4.23+vsys;
     return battery_25896.getICHG();
 }
 float battery_25896_get_TEMP(void)
 {
-    // static float vsys = 0;
-    // vsys+=0.5;
-    // return 4.23+vsys;
     return battery_25896.getTemperature();
 }
 float battery_25896_get_TSPCT(void)
 {
-    // static float vsys = 0;
-    // vsys=0.6;
-    // return 4.23+vsys;
     return battery_25896.getTSPCT();
 }
 
 /* 27220 */
 bool battery_27220_is_vaild(void)
 {
-    // return bq27220_is_init;
-    return true;
+    return bq27220_is_init;
 }
 
 bool battery_27220_is_chr(void)
 {
-    return false;
+    return bq27220.getIsCharging();
 }
 
 float battery_27220_get_VOLT(void)
 {
-    static float vsys = 0;
-    vsys+=0.01;
-    return 4.23+vsys;
+    return bq27220.getVolt(VOLT);
 }
 float battery_27220_get_VOLT_CHG(void)
 {
-    static float vsys = 0;
-    vsys+=0.02;
-    return 4.23+vsys;
+    return bq27220.getVolt(VOLT_CHARGING);
 }
 float battery_27220_get_CURR_ARG(void)
 {
-    static float vsys = 0;
-    vsys+=0.03;
-    return 4.23+vsys;
+    return bq27220.getCurr(CURR_AVERAGE);
 }
 float battery_27220_get_CURR_INS(void)
 {
-    static float vsys = 0;
-    vsys+=0.04;
-    return 4.23+vsys;
+    return bq27220.getCurr(CURR_INSTANT);
 }
 float battery_27220_get_CURR_STD(void)
 {
-    static float vsys = 0;
-    vsys+=0.05;
-    return 4.23+vsys;
+    return bq27220.getCurr(CURR_STANDBY);
 }
 float battery_27220_get_CURR_CHG(void)
 {
-    static float vsys = 0;
-    vsys+=0.06;
-    return 4.23+vsys;
+    return bq27220.getCurr(CURR_CHARGING);
 }
 float battery_27220_get_TEMP(void)
 {
-    static float vsys = 0;
-    vsys+=0.07;
-    return 4.23+vsys;
+    return (float)(bq27220.getTemp() / 10);
 }
 float battery_27220_get_BATT_CAP(void)
 {
-    static float vsys = 0;
-    vsys+=0.08;
-    return 4.23+vsys;
+    return bq27220.getRemainCap();
 }
 float battery_27220_get_BATT_CAP_FULL(void)
 {
-    static float vsys = 0;
-    vsys+=0.09;
-    return 4.23+vsys;
+    return bq27220.getRemainCap();
 }

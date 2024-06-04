@@ -475,6 +475,8 @@ static void create2(lv_obj_t *parent) {
     scr_back_btn_create(parent, "Lora", scr2_btn_event_cb);
 }
 static void entry2(void) {
+    ui_lora_standby();
+
     lora_lab_cnt = 1;
 
     lv_obj_align(lora_mode_sw, LV_ALIGN_TOP_MID, 0, 22);
@@ -483,7 +485,9 @@ static void entry2(void) {
     lora_send_timer = lv_timer_create(lora_send_timer_event, 5000, NULL);
     lv_timer_pause(lora_send_timer);
 }
-static void exit2(void) { }
+static void exit2(void) {
+    ui_lora_sleep();
+}
 static void destroy2(void) {
     if(lora_send_timer) {
         lv_timer_del(lora_send_timer);
@@ -1246,7 +1250,7 @@ static void battery_data_refr(void)
         lv_snprintf(buf, line_max, "%.2fmA", battery_27220_get_CURR_CHG());
         battery_set_line(batt_right[6], "Curr Charging:", buf);
 
-        lv_snprintf(buf, line_max, "%.2fK", battery_27220_get_TEMP());
+        lv_snprintf(buf, line_max, "%.2f", battery_27220_get_TEMP());
         battery_set_line(batt_right[7], "TEMP:", buf);
 
         lv_snprintf(buf, line_max, "%.2fmAh", battery_27220_get_BATT_CAP());

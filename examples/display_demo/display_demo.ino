@@ -126,6 +126,9 @@ void eeprom_wr_wifi(const char *ssid, uint16_t ssid_len, const char *pwsd, uint1
     EEPROM.commit();
 }
 
+
+#define DEBUG_INFO //
+
 void eeprom_init()
 {
     if (!EEPROM.begin(EEPROM_SIZE_MAX)) {
@@ -405,6 +408,7 @@ bool lora_init(void)
     radio.setPacketSentAction(set_transmit_flag);
     Serial.println(F("[SX1262] Sending first packet ... "));
     transmissionState = radio.startTransmit("Hello World!");
+    radio.sleep();
 
     return true;
 }

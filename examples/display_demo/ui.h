@@ -50,6 +50,8 @@ void ui_epd_refr(uint16_t time, uint16_t cycle, uint16_t times);
 void ui_if_epd_get_time(uint8_t *h, uint8_t *m, uint8_t *s);
 void ui_if_epd_get_data(uint8_t *year, uint8_t *month, uint8_t *day, uint8_t *week);
 // LORA
+void ui_lora_standby(void);
+void ui_lora_sleep(void);
 int ui_if_epd_get_LORA_mode(void);
 void ui_if_epd_set_LORA_mode(int mode);
 void ui_if_epd_LORA_send(const char *str);

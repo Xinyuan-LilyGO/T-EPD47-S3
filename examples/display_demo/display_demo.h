@@ -41,6 +41,7 @@ extern TouchDrvGT911 touch;
 // lora
 #define LORA_MODE_SEND 0
 #define LORA_MODE_RECV 1
+extern SX1262 radio;
 extern int lora_mode;
 extern void lora_set_mode(int mode);
 extern bool lora_receive(String *str);

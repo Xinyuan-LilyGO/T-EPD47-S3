@@ -261,7 +261,8 @@ public:
     uint8_t getPoint()
     {
         // GT911_POINT_INFO 0X814E
-        uint8_t val = readGT911(GT911_POINT_INFO) & 0x0F;
+        uint8_t val = readGT911(GT911_POINT_INFO);
+        // LOG_PORT.printf("val=%d\n", val);
         clearBuffer();
         return val & 0x0F;
     }

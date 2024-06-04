@@ -30,6 +30,15 @@ void ui_if_epd_get_data(uint8_t *year, uint8_t *month, uint8_t *day, uint8_t *we
     *week = timeinfo.tm_wday;
 }
 //************************************[ screen 2 ]****************************************** lora
+void ui_lora_standby(void)
+{
+    radio.standby();
+}
+void ui_lora_sleep(void)
+{
+    radio.sleep();
+}
+
 int ui_if_epd_get_LORA_mode(void)
 {
     return lora_mode;
@@ -243,7 +252,7 @@ float battery_27220_get_CURR_CHG(void)
 }
 float battery_27220_get_TEMP(void)
 {
-    return (float)(bq27220.getTemp() / 10);
+    return (float)(bq27220.getTemp() / 10 - 273); // 摄氏度
 }
 float battery_27220_get_BATT_CAP(void)
 {

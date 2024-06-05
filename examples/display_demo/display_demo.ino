@@ -24,7 +24,7 @@ bool wifi_eeprom_upd = false;
 struct tm timeinfo = {0};
 
 XPowersPPM PPM;
-BQ25896 battery_25896(Wire);
+// BQ25896 battery_25896(Wire);
 BQ27220 bq27220;
 SensorPCF8563 rtc;
 TouchDrvGT911 touch;
@@ -221,7 +221,7 @@ void disp_refrensh_cycle_cb(lv_timer_t *t)
 
     epd_poweron();
     // epd_clear();
-    Serial.printf("t=%d, c=%d\n", times, cycle);
+    // Serial.printf("t=%d, c=%d\n", times, cycle);
     epd_clear_area_cycles(epd_full_screen(), times, cycle);
     epd_draw_grayscale_image(epd_full_screen(), (uint8_t *)decodebuffer);
     epd_poweroff();
@@ -533,7 +533,36 @@ void setup()
     if (Wire.endTransmission() == 0)
     {
         bq25896_is_init = true;
-        battery_25896.begin();
+        // battery_25896.begin();
+        PPM.init(Wire, BOARD_SDA, BOARD_SCL, BQ25896_SLAVE_ADDRESS);
+        // Set the minimum operating voltage. Below this voltage, the PPM will protect
+        PPM.setSysPowerDownVoltage(3300);
+
+        // Set input current limit, default is 500mA
+        PPM.setInputCurrentLimit(3250);
+
+        Serial.printf("getInputCurrentLimit: %d mA\n",PPM.getInputCurrentLimit());
+
+        // Disable current limit pin
+        PPM.disableCurrentLimitPin();
+
+        // Set the charging target voltage, Range:3840 ~ 4608mV ,step:16 mV
+        PPM.setChargeTargetVoltage(4208);
+
+        // Set the precharge current , Range: 64mA ~ 1024mA ,step:64mA
+        PPM.setPrechargeCurr(64);
+
+        // The premise is that Limit Pin is disabled, or it will only follow the maximum charging current set by Limi tPin.
+        // Set the charging current , Range:0~5056mA ,step:64mA
+        PPM.setChargerConstantCurr(832);
+
+        // Get the set charging current
+        PPM.getChargerConstantCurr();
+        Serial.printf("getChargerConstantCurr: %d mA\n",PPM.getChargerConstantCurr());
+
+        PPM.enableADCMeasure();
+
+        PPM.enableCharge();
     }
 
     // BQ27220 --- 0x55

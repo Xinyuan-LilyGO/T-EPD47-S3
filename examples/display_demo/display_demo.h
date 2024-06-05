@@ -35,7 +35,7 @@ extern bool wifi_is_connect;
 extern bool home_btn_st;
 
 // sensor
-extern BQ25896 battery_25896;
+// extern BQ25896 battery_25896;
 extern BQ27220 bq27220;
 extern SensorPCF8563 rtc;
 extern TouchDrvGT911 touch;

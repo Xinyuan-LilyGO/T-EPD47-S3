@@ -1202,29 +1202,29 @@ static void battery_data_refr(void)
         lv_snprintf(buf, line_max, "%.2fV", battery_25896_get_VBUS());
         battery_set_line(batt_left[1], "VBUS:", buf);
 
-        lv_snprintf(buf, line_max, "%s", battery_25896_get_VBUS_ST());
-        battery_set_line(batt_left[2], "VBUS Status:", buf);
-
         lv_snprintf(buf, line_max, "%.2fV", battery_25896_get_VSYS());
-        battery_set_line(batt_left[3], "VSYS:", buf);
-
-        lv_snprintf(buf, line_max, "%s", battery_25896_get_VSYS_ST());
-        battery_set_line(batt_left[4], "VSYS Status:", buf);
+        battery_set_line(batt_left[2], "VSYS:", buf);
 
         lv_snprintf(buf, line_max, "%.2fV", battery_25896_get_VBAT());
-        battery_set_line(batt_left[5], "VBAT:", buf);
+        battery_set_line(batt_left[3], "VBAT:", buf);
 
-        lv_snprintf(buf, line_max, "%.2fmA", battery_25896_get_ICHG());
-        battery_set_line(batt_left[6], "ICHG:", buf);
+        lv_snprintf(buf, line_max, "%.2fv", battery_25896_get_targ_VOLT());
+        battery_set_line(batt_left[4], "VOLT Target:", buf);
 
-        lv_snprintf(buf, line_max, "%.2f", battery_25896_get_TEMP());
-        battery_set_line(batt_left[7], "TEMP:", buf);
+        lv_snprintf(buf, line_max, "%.2fmA", battery_25896_get_CHG_CURR());
+        battery_set_line(batt_left[5], "Charge Curr:", buf);
 
-        lv_snprintf(buf, line_max, "%.2f", battery_25896_get_TSPCT());
-        battery_set_line(batt_left[8], "TSPCT:", buf);
+        lv_snprintf(buf, line_max, "%.2fmA", battery_25896_get_PREC_CURR());
+        battery_set_line(batt_left[6], "Precharge Curr:", buf);
 
-        lv_snprintf(buf, line_max, "%s", battery_25896_get_CHG_ERR());
-        battery_set_line(batt_left[9], "Charger Err:", buf);
+        lv_snprintf(buf, line_max, "%s", battery_25896_get_CHG_ST());
+        battery_set_line(batt_left[7], "CHG Status:", buf);
+
+        lv_snprintf(buf, line_max, "%s", battery_25896_get_VBUS_ST());
+        battery_set_line(batt_left[8], "VBUS Status:", buf);
+
+        lv_snprintf(buf, line_max, "%s", battery_25896_get_NTC_ST());
+        battery_set_line(batt_left[9], "NCT:", buf);
 
     }
 
@@ -1265,7 +1265,7 @@ static void batt_refr_timer_event(lv_timer_t *t)
 {
     battery_data_refr();
     // ui_if_epd_refr(EPD_REFRESH_TIME);
-    ui_epd_refr(EPD_REFRESH_TIME, 1, 1);
+    ui_epd_refr(EPD_REFRESH_TIME, 2, 2);
 }
 
 static lv_obj_t * scr7_create_label(lv_obj_t *parent)
@@ -1410,20 +1410,38 @@ static void scr8_btn_event_cb(lv_event_t * e)
     }
 }
 
+static void scr8_shutdown_timer_event(lv_timer_t *t)
+{
+    lv_timer_del(t);
+    ui_batt_power_off();
+}
+
 static void create8(lv_obj_t *parent)
 {
 
-    lv_obj_t * label = lv_label_create(parent);
-    lv_label_set_text(label, "Shoutdown");
-    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    lv_obj_set_style_text_font(label, &Font_Mono_Bold_25, LV_PART_MAIN);
-    lv_obj_center(label);
+    lv_obj_t * img = lv_img_create(parent);
+    lv_img_set_src(img, &img_start);
+    lv_obj_center(img);
+
+
+    const char *str1 = "PWR: Press and hold to power on";
+
+    lv_obj_t *label = lv_label_create(parent);
+    lv_label_set_text(label, str1);
+    lv_obj_set_style_transform_angle(label, -900, 0);
+    lv_obj_align(label, LV_ALIGN_RIGHT_MID, 60, 100);
+
+    lv_coord_t w = lv_txt_get_width(str1, strlen(str1), &Font_Geist_Bold_20, 0, false);
+    lv_obj_set_style_transform_pivot_x(label, w / 2, 0);
 
     // back
-    scr_back_btn_create(parent, "Wifi", scr8_btn_event_cb);
+    // scr_back_btn_create(parent, "Shoutdown", scr8_btn_event_cb);
+
+    lv_timer_create(scr8_shutdown_timer_event, EPD_REFRESH_TIME+500, NULL);
 }
 
 static void entry8(void) {
+    
 }
 static void exit8(void) {
 }

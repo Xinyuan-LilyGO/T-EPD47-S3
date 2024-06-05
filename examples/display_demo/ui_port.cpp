@@ -149,7 +149,7 @@ bool battery_25896_is_vaild(void)
 
 bool battery_25896_is_chr(void)
 {
-    if(battery_25896.getCHG_STATUS() == BQ25896::CHG_STAT::NOT_CHARGING) {
+    if(PPM.isVbusIn() == false) {
         return false;
     } else {
         return true;
@@ -158,61 +158,44 @@ bool battery_25896_is_chr(void)
 
 void battery_25896_refr(void)
 {
-    battery_25896.properties();
+    // battery_25896.properties();
 }
 
-const char * battery_25896_get_VSYS_ST(void)
+const char * battery_25896_get_CHG_ST(void)
 {
-    const char *st = (battery_25896.getVSYS_STATUS()==BQ25896::VSYS_STAT::IN_VSYSMIN ? "BAT < VSYSMIN" : "BAT > VSYSMIN");
-    return st;
+    return PPM.getChargeStatusString();
 }
 const char * battery_25896_get_VBUS_ST(void) 
 {
-    if(battery_25896.getVBUS_STATUS()==BQ25896::VBUS_STAT::NO_INPUT) {
-        return "Not input";
-    } else if(battery_25896.getVBUS_STATUS()==BQ25896::VBUS_STAT::USB_HOST) {
-        return "USB host";
-    } else if(battery_25896.getVBUS_STATUS()==BQ25896::VBUS_STAT::ADAPTER) {
-        return "Adapter";
-    } else {
-        return "OTG";
-    }
+     return PPM.getBusStatusString();
 }
-const char * battery_25896_get_CHG_ERR(void)
+const char * battery_25896_get_NTC_ST(void)
 {
-    if(battery_25896.getCHG_Fault_STATUS()==BQ25896::CHG_FAULT::NORMAL) {
-        return "Normal";
-    } else if(battery_25896.getCHG_Fault_STATUS()==BQ25896::CHG_FAULT::INPUT_FAULT) {
-        return "Input Fault";
-    } else if(battery_25896.getCHG_Fault_STATUS()==BQ25896::CHG_FAULT::THERMAL_SHUTDOWN) {
-        return "Thermal Shutdown";
-    } else {
-        return "TIMER_EXPIRED";
-    }
+    return PPM.getNTCStatusString();
 }
 float battery_25896_get_VBUS(void)
 {
-    return battery_25896.getVBUS();
+    return (PPM.getBattVoltage() *1.0 / 1000.0 );
 }
 float battery_25896_get_VSYS(void) 
 {
-    return battery_25896.getVSYS();
+    return (PPM.getSystemVoltage() * 1.0 / 1000.0);
 }
 float battery_25896_get_VBAT(void)
 {
-    return battery_25896.getVBAT();
+    return (PPM.getBattVoltage() * 1.0 / 1000.0);
 }
-float battery_25896_get_ICHG(void)
+float battery_25896_get_targ_VOLT(void)
 {
-    return battery_25896.getICHG();
+    return (PPM.getChargeTargetVoltage() * 1.0 / 1000.0);
 }
-float battery_25896_get_TEMP(void)
+float battery_25896_get_CHG_CURR(void)
 {
-    return battery_25896.getTemperature();
+    return (PPM.getChargeCurrent());
 }
-float battery_25896_get_TSPCT(void)
+float battery_25896_get_PREC_CURR(void)
 {
-    return battery_25896.getTSPCT();
+    return (PPM.getPrechargeCurr());;
 }
 
 /* 27220 */
@@ -261,6 +244,13 @@ float battery_27220_get_BATT_CAP(void)
 float battery_27220_get_BATT_CAP_FULL(void)
 {
     return bq27220.getRemainCap();
+}
+
+//
+void ui_batt_power_off(void)
+{
+    PPM.shutdown();
+    Serial.println("Shutdown .....");
 }
 
 //************************************[ home btn ]******************************************

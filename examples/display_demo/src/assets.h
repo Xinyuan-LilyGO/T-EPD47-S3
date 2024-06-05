@@ -24,7 +24,7 @@ LV_IMG_DECLARE(img_JPG)
 LV_IMG_DECLARE(img_BMP)
 LV_IMG_DECLARE(img_battery)
 LV_IMG_DECLARE(img_shutdown)
-
+LV_IMG_DECLARE(img_start)
 
 // font
 // LV_FONT_DECLARE(Font_Mono_Bold_14);

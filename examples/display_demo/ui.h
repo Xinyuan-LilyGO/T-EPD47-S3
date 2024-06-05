@@ -81,15 +81,15 @@ const char *ui_if_epd_get_WIFI_pwd(void);
 bool battery_25896_is_vaild(void);
 bool battery_25896_is_chr(void);
 void battery_25896_refr(void);
-const char * battery_25896_get_VSYS_ST(void);
+const char * battery_25896_get_CHG_ST(void);
 const char * battery_25896_get_VBUS_ST(void);
-const char * battery_25896_get_CHG_ERR(void);
+const char * battery_25896_get_NTC_ST(void);
 float battery_25896_get_VBUS(void);
 float battery_25896_get_VSYS(void);
 float battery_25896_get_VBAT(void);
-float battery_25896_get_ICHG(void);
-float battery_25896_get_TEMP(void);
-float battery_25896_get_TSPCT(void);
+float battery_25896_get_targ_VOLT(void);
+float battery_25896_get_CHG_CURR(void);
+float battery_25896_get_PREC_CURR(void);
 /* 27220 */
 bool battery_27220_is_vaild(void);
 bool battery_27220_is_chr(void);
@@ -102,6 +102,9 @@ float battery_27220_get_CURR_CHG(void);
 float battery_27220_get_TEMP(void);
 float battery_27220_get_BATT_CAP(void);
 float battery_27220_get_BATT_CAP_FULL(void);
+
+//
+void ui_batt_power_off(void);
 
 // home back
 void home_back_chk_event(void *used_data);

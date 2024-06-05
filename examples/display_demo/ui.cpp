@@ -1439,6 +1439,25 @@ static scr_lifecycle_t screen8 = {
 };
 #endif
 //************************************[ UI ENTRY ]******************************************
+
+
+
+void home_back_timer_event(lv_timer_t *t)
+{
+    if(ui_get_home_btn_st()) {
+        ui_set_home_btn_st(false);
+        ui_if_epd_refr(EPD_REFRESH_TIME);
+        scr_mgr_switch(SCREEN0_ID, false);
+        printf("home_back_chk_event\n");
+    }
+}
+
+// void home_back_chk_event(void *used_data)
+// {
+//     scr_mgr_switch(SCREEN0_ID, false);
+//     printf("home_back_chk_event\n");
+// }
+
 void ui_epd47_entry(void)
 {
     lv_disp_t *disp = lv_disp_get_default();
@@ -1458,4 +1477,7 @@ void ui_epd47_entry(void)
 
     scr_mgr_switch(SCREEN0_ID, false); // set root screen
     scr_mgr_set_anim(LV_SCR_LOAD_ANIM_NONE, LV_SCR_LOAD_ANIM_NONE, LV_SCR_LOAD_ANIM_NONE);
+
+    lv_timer_create(home_back_timer_event, 50, NULL);
+    // touch.setHomeButtonCallback(home_back_chk_event, NULL);
 }

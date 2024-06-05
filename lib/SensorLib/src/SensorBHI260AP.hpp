@@ -30,13 +30,14 @@
  */
 #pragma once
 
+#if defined(ARDUINO)
+
 #include "bosch/BoschParse.h"
 #include "bosch/SensorBhy2Define.h"
 #include "bosch/firmware/BHI260AP.fw.h"
 
 
 
-#if defined(ARDUINO)
 
 class SensorBHI260AP
 {
@@ -525,7 +526,7 @@ public:
 private:
     static void handleISR()
     {
-        *(bool *)(__data_available) = true;
+        __data_available = true;
     }
 
 
@@ -681,7 +682,6 @@ protected:
     uint16_t        __max_rw_length;
 };
 
-volatile bool SensorBHI260AP::__data_available;
 
 #endif /*defined(ARDUINO)*/
 

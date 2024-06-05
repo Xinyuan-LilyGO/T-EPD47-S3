@@ -9,6 +9,7 @@ bool lora_is_init = false;
 bool touchOnline = false;
 bool bq25896_is_init = false;
 bool bq27220_is_init = false;
+bool home_btn_st = false;
 
 // wifi
 char wifi_ssid[WIFI_SSID_MAX_LEN] = {0};
@@ -22,6 +23,7 @@ bool wifi_is_connect = false;
 bool wifi_eeprom_upd = false;
 struct tm timeinfo = {0};
 
+XPowersPPM PPM;
 BQ25896 battery_25896(Wire);
 BQ27220 bq27220;
 SensorPCF8563 rtc;
@@ -463,6 +465,11 @@ void lora_transmit(const char *str)
     }
 }
 
+void home_btn_event(void *user_data)
+{
+    home_btn_st = true;
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -509,6 +516,7 @@ void setup()
         touch.setMirrorXY(false, true);
         touchOnline = true;
         Serial.printf("touchOnline \n");
+        touch.setHomeButtonCallback(home_btn_event, NULL);
     }
 
     // RTC --- 0x51

@@ -262,3 +262,13 @@ float battery_27220_get_BATT_CAP_FULL(void)
 {
     return bq27220.getRemainCap();
 }
+
+//************************************[ home btn ]******************************************
+bool ui_get_home_btn_st(void)
+{
+    return home_btn_st;
+}
+void ui_set_home_btn_st(bool st)
+{ 
+    home_btn_st = st;
+}

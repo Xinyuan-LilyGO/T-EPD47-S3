@@ -102,4 +102,9 @@ float battery_27220_get_CURR_CHG(void);
 float battery_27220_get_TEMP(void);
 float battery_27220_get_BATT_CAP(void);
 float battery_27220_get_BATT_CAP_FULL(void);
+
+// home back
+void home_back_chk_event(void *used_data);
+bool ui_get_home_btn_st(void);
+void ui_set_home_btn_st(bool st);
 #endif /* __UI_EPD47H__ */

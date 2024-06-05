@@ -18,6 +18,7 @@
 #include <EEPROM.h>
 #include "BQ25896.h"
 #include "bq27220.h"
+#include <XPowersLib.h>
 
 // define 
 #define WIFI_SSID "xinyuandianzi"
@@ -31,12 +32,14 @@ extern bool touchOnline;
 extern bool bq25896_is_init;
 extern bool bq27220_is_init;
 extern bool wifi_is_connect;
+extern bool home_btn_st;
 
 // sensor
 extern BQ25896 battery_25896;
 extern BQ27220 bq27220;
 extern SensorPCF8563 rtc;
 extern TouchDrvGT911 touch;
+extern XPowersPPM PPM;
 
 // lora
 #define LORA_MODE_SEND 0

@@ -265,3 +265,8 @@ void scr_mgr_set_bg_color(uint32_t c)
 }
 
 
+int scr_mgr_get_curr_id(void)
+{
+    return scr_stack_top->id;
+}
+

@@ -51,6 +51,8 @@ bool scr_mgr_pop(bool anim);
 void scr_mgr_set_anim(lv_scr_load_anim_t sw, lv_scr_load_anim_t push, lv_scr_load_anim_t pop);
 // set bg color
 void scr_mgr_set_bg_color(uint32_t c);
+//
+int scr_mgr_get_curr_id(void);
 
 #ifdef __cplusplus
 } /*extern "C"*/

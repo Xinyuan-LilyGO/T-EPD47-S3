@@ -175,7 +175,7 @@ const char * battery_25896_get_NTC_ST(void)
 }
 float battery_25896_get_VBUS(void)
 {
-    return (PPM.getBattVoltage() *1.0 / 1000.0 );
+    return (PPM.getVbusVoltage() *1.0 / 1000.0 );
 }
 float battery_25896_get_VSYS(void) 
 {

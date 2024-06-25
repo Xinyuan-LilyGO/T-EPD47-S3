@@ -1429,13 +1429,13 @@ static void create8(lv_obj_t *parent)
     lv_obj_t *label = lv_label_create(parent);
     lv_label_set_text(label, str1);
     lv_obj_set_style_transform_angle(label, -900, 0);
-    lv_obj_align(label, LV_ALIGN_RIGHT_MID, 60, 100);
+    lv_obj_align(label, LV_ALIGN_RIGHT_MID, 60, 80);
 
-    lv_coord_t w = lv_txt_get_width(str1, strlen(str1), &Font_Geist_Bold_20, 0, false);
+    lv_coord_t w = lv_txt_get_width(str1, strlen(str1), &Font_Mono_Bold_20, 0, false);
     lv_obj_set_style_transform_pivot_x(label, w / 2, 0);
 
     // back
-    // scr_back_btn_create(parent, "Shoutdown", scr8_btn_event_cb);
+    scr_back_btn_create(parent, "Shoutdown", scr8_btn_event_cb);
 
     lv_timer_create(scr8_shutdown_timer_event, EPD_REFRESH_TIME+500, NULL);
 }
@@ -1458,15 +1458,18 @@ static scr_lifecycle_t screen8 = {
 #endif
 //************************************[ UI ENTRY ]******************************************
 
-
-
 void home_back_timer_event(lv_timer_t *t)
 {
     if(ui_get_home_btn_st()) {
+        int id = scr_mgr_get_curr_id();
         ui_set_home_btn_st(false);
-        ui_if_epd_refr(EPD_REFRESH_TIME);
-        scr_mgr_switch(SCREEN0_ID, false);
-        printf("home_back_chk_event\n");
+        
+        // printf("id = %d home_back_chk_event\n", id);
+
+        if(id != SCREEN0_ID) {
+            ui_if_epd_refr(EPD_REFRESH_TIME);
+            scr_mgr_switch(SCREEN0_ID, false);
+        }
     }
 }
 

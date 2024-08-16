@@ -155,9 +155,9 @@ void eeprom_init()
         uint8_t cycle = EEPROM.read(UI_REFR_CYCLE_EEPROM_ADDR);
         uint8_t times = EEPROM.read(UI_REFR_TIMES_EEPROM_ADDR);
 
-        refr_backlight = backlight;
-        refr_cycle = cycle;
-        refr_times = times;
+        refr_backlight = (backlight != 255 ? backlight : refr_backlight);
+        refr_cycle     = (cycle != 255     ? cycle : refr_cycle);
+        refr_times     = (times != 255     ? times : refr_times);
         
         // Serial.printf("eeprom theme: %d\n", theme);
         Serial.printf("eeprom backlight: %d\n", refr_backlight);
@@ -494,7 +494,7 @@ void setup()
 {
     Serial.begin(115200);
 
-    // eeprom_init();
+    eeprom_init();
 
     // wifi_init();
     configTime(8 * 3600, 0, ntpServer1, ntpServer2);

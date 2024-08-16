@@ -55,6 +55,8 @@ void ui_lora_sleep(void);
 int ui_if_epd_get_LORA_mode(void);
 void ui_if_epd_set_LORA_mode(int mode);
 void ui_if_epd_LORA_send(const char *str);
+void ui_lora_transmit(const char *str);
+bool ui_lora_recv(String *str);
 
 // SD
 void ui_if_epd_set_imgbtn(const char *text, int text_len, int type);

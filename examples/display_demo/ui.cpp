@@ -294,7 +294,7 @@ static scr_lifecycle_t screen1 = {
 static lv_obj_t *scr2_cont;
 static lv_obj_t *scr2_cont_info;
 static lv_obj_t *lora_mode_sw;
-static lv_obj_t *lora_open_sw;
+// static lv_obj_t *lora_open_sw;
 static lv_obj_t *lora_lab_buf[11] = {0};
 static lv_obj_t *lora_lab_mode;
 static lv_obj_t *lora_lab_time;
@@ -315,22 +315,53 @@ static lv_obj_t * scr2_create_label(lv_obj_t *parent)
 
 static void lora_send_timer_event(lv_timer_t *t)
 {
-    String str = "Lora Send #" + String(lora_sr_cnt++);
-    ui_if_epd_LORA_send(str.c_str());
+    if(ui_if_epd_get_LORA() == false) return;
+    
+    int mode = ui_if_epd_get_LORA_mode();
 
-    if(lora_lab_buf[lora_lab_cnt] == NULL) {
-        lora_lab_buf[lora_lab_cnt] = scr2_create_label(scr2_cont_info);
-        lv_label_set_text(lora_lab_buf[lora_lab_cnt], str.c_str());
-    } else {
-        lv_label_set_text(lora_lab_buf[lora_lab_cnt], str.c_str());
+    if(mode == 0) // send
+    {
+        String str = "Lora Send #" + String(lora_sr_cnt++);
+        ui_lora_transmit(str.c_str());
+
+        if(lora_lab_buf[lora_lab_cnt] == NULL) {
+            lora_lab_buf[lora_lab_cnt] = scr2_create_label(scr2_cont_info);
+            lv_label_set_text(lora_lab_buf[lora_lab_cnt], str.c_str());
+        } else {
+            lv_label_set_text(lora_lab_buf[lora_lab_cnt], str.c_str());
+        }
+
+        lora_lab_cnt++;
+        if(lora_lab_cnt >= 10) {
+            lora_lab_cnt = 1;
+        }
+        ui_if_epd_refr(EPD_REFRESH_TIME);
+    } 
+    else if(mode == 1)
+    {
+        String str = "";
+
+        if(lora_recv_success) {
+            lora_recv_success = false;
+
+            str += lora_recv_data;
+
+            lv_label_set_text_fmt(lora_lab_buf[0], "RECV: %ddm", lora_recv_rssi);
+
+            if(lora_lab_buf[lora_lab_cnt] == NULL) {
+                lora_lab_buf[lora_lab_cnt] = scr2_create_label(scr2_cont_info);
+                lv_label_set_text(lora_lab_buf[lora_lab_cnt], str.c_str());
+            } else {
+                lv_label_set_text(lora_lab_buf[lora_lab_cnt], str.c_str());
+            }
+
+            lora_lab_cnt++;
+            if(lora_lab_cnt >= 10) {
+                lora_lab_cnt = 1;
+            }
+            ui_if_epd_refr(EPD_REFRESH_TIME);
+        }
     }
-
-    lora_lab_cnt++;
-    if(lora_lab_cnt >= 10) {
-        lora_lab_cnt = 1;
-    }
-
-    ui_if_epd_refr(EPD_REFRESH_TIME);
 }
 
 static void lora_mode_sw_event(lv_event_t * e)
@@ -338,30 +369,31 @@ static void lora_mode_sw_event(lv_event_t * e)
     if(e->code == LV_EVENT_CLICKED){
         int mode = ui_if_epd_get_LORA_mode();
 
-        if(e->target == lora_open_sw) {
-            static int open = 0;
-            lv_obj_t *lab = (lv_obj_t *)e->user_data;
+        // if(e->target == lora_open_sw) {
+        //     static int open = 0;
+        //     lv_obj_t *lab = (lv_obj_t *)e->user_data;
             
-            if(mode == 0 && open == 0) {
-                lv_timer_resume(lora_send_timer);
-                lv_label_set_text(lab, "SEND CLOSE");
-            }
-            if(mode == 0 && open == 1) {
-                lv_timer_pause(lora_send_timer);
-                lv_label_set_text(lab, "SEND OPEN");
-                ui_if_epd_refr(EPD_REFRESH_TIME);
-            }
-            open = !open;
+        //     if(mode == 0 && open == 0) {
+        //         lv_timer_resume(lora_send_timer);
+        //         lv_label_set_text(lab, "SEND CLOSE");
+        //     }
+        //     if(mode == 0 && open == 1) {
+        //         lv_timer_pause(lora_send_timer);
+        //         lv_label_set_text(lab, "SEND OPEN");
+        //         ui_if_epd_refr(EPD_REFRESH_TIME);
+        //     }
+        //     open = !open;
 
-        } else {
+        // } else 
+        {
             mode = !mode;
-            if(mode == 0) { // send
+            if(mode == LORA_MODE_SEND) { // send
                 lv_obj_clear_flag(lora_lab_time, LV_OBJ_FLAG_HIDDEN);
                 lv_label_set_text_fmt(lora_lab_mode, "%s : %s", "Mode", "send");
                 lv_label_set_text(lora_lab_buf[0], "SEND:");
-                lv_timer_resume(lora_send_timer);
-                lora_sr_cnt = 0;
-            } else if(mode == 1) { // recv
+                lora_sr_cnt = 1;
+                // lv_timer_resume(lora_send_timer);
+            } else if(mode == LORA_MODE_RECV) { // recv
                 lv_obj_add_flag(lora_lab_time, LV_OBJ_FLAG_HIDDEN);
                 lv_label_set_text_fmt(lora_lab_mode, "%s : %s", "Mode", "recv");
                 lv_label_set_text(lora_lab_buf[0], "RECV:");
@@ -369,8 +401,9 @@ static void lora_mode_sw_event(lv_event_t * e)
                     if(lora_lab_buf[i])
                         lv_label_set_text(lora_lab_buf[i], " ");
                 }
-                lv_timer_pause(lora_send_timer);
+                // lv_timer_pause(lora_send_timer);
             }
+            lora_lab_cnt = 1;
             ui_if_epd_set_LORA_mode(mode);
             ui_if_epd_refr(EPD_REFRESH_TIME);
         }
@@ -423,30 +456,33 @@ static void create2(lv_obj_t *parent) {
     lv_label_set_text(label, "MODE SW");
     lv_obj_add_event_cb(lora_mode_sw, lora_mode_sw_event, LV_EVENT_CLICKED, NULL);
 
-    lora_open_sw = lv_btn_create(parent);
-    lv_obj_set_style_radius(lora_open_sw, 5, LV_PART_MAIN);
-    lv_obj_set_style_border_width(lora_open_sw, 2, LV_PART_MAIN);
-    label = lv_label_create(lora_open_sw);
-    lv_obj_set_style_text_font(label, &Font_Mono_Bold_25, LV_PART_MAIN);   
-    lv_label_set_text(label, "SEND OPEN");
-    lv_obj_add_event_cb(lora_open_sw, lora_mode_sw_event, LV_EVENT_CLICKED, label);
-    
-    
+    // lora_open_sw = lv_btn_create(parent);
+    // lv_obj_set_style_radius(lora_open_sw, 5, LV_PART_MAIN);
+    // lv_obj_set_style_border_width(lora_open_sw, 2, LV_PART_MAIN);
+    // label = lv_label_create(lora_open_sw);
+    // lv_obj_set_style_text_font(label, &Font_Mono_Bold_25, LV_PART_MAIN);   
+    // lv_label_set_text(label, "SEND OPEN");
+    // lv_obj_add_event_cb(lora_open_sw, lora_mode_sw_event, LV_EVENT_CLICKED, label);
 
     // --------------- LEFT ---------------
     scr_middle_line(parent);
 
     lora_lab_mode = scr2_create_label(scr2_cont);
-    lv_label_set_text_fmt(lora_lab_mode, "%s : %s", "Mode", "send");
+    int mode = ui_if_epd_get_LORA_mode();
+    if(mode == LORA_MODE_SEND ){
+        lv_label_set_text_fmt(lora_lab_mode, "%s : %s", "Mode", "send");
+    } else {
+        lv_label_set_text_fmt(lora_lab_mode, "%s : %s", "Mode", "recv");
+    }
 
     lora_lab_time = scr2_create_label(scr2_cont);
     lv_label_set_text_fmt(lora_lab_time, "%s : %ds", "SendTimeInterval", 5);
 
     label = scr2_create_label(scr2_cont);
-    lv_label_set_text_fmt(label, "%s : %0.1fMHz", "Frequency", 433.5);
+    lv_label_set_text_fmt(label, "%s : %0.1fMHz", "Frequency", 850.0);
 
     label = scr2_create_label(scr2_cont);
-    lv_label_set_text_fmt(label, "%s : %0.1fKHz", "Bandwidth", 250.0);
+    lv_label_set_text_fmt(label, "%s : %0.1fKHz", "Bandwidth", 125.0);
 
     label = scr2_create_label(scr2_cont);
     lv_label_set_text_fmt(label, "%s : %d", "SpreadingFactor", 10);
@@ -461,7 +497,7 @@ static void create2(lv_obj_t *parent) {
     lv_label_set_text_fmt(label, "%s : %d", "OutputPower", 10);
 
     label = scr2_create_label(scr2_cont);
-    lv_label_set_text_fmt(label, "%s : %d", "CurrentLimit", 80);
+    lv_label_set_text_fmt(label, "%s : %d", "CurrentLimit", 140);
 
     label = scr2_create_label(scr2_cont);
     lv_label_set_text_fmt(label, "%s : %d", "PreambleLength", 15);
@@ -469,21 +505,25 @@ static void create2(lv_obj_t *parent) {
     // --------------- RIGHT ---------------
     lora_lab_buf[0] = scr2_create_label(scr2_cont_info);
     // lv_obj_set_style_text_align(lora_lab_buf[0], LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    lv_label_set_text(lora_lab_buf[0], "SEND:");
+    if(mode == LORA_MODE_SEND ){
+        ui_if_epd_set_LORA_mode(LORA_MODE_SEND);
+    } else {
+        lv_label_set_text(lora_lab_buf[0], "RECV:");
+    }
 
     // back
     scr_back_btn_create(parent, "Lora", scr2_btn_event_cb);
 }
 static void entry2(void) {
-    ui_lora_standby();
+    // ui_lora_standby();
 
     lora_lab_cnt = 1;
 
     lv_obj_align(lora_mode_sw, LV_ALIGN_TOP_MID, 0, 22);
-    lv_obj_align(lora_open_sw, LV_ALIGN_BOTTOM_MID, 0, -22);
+    // lv_obj_align(lora_open_sw, LV_ALIGN_BOTTOM_MID, 0, -22);
 
     lora_send_timer = lv_timer_create(lora_send_timer_event, 5000, NULL);
-    lv_timer_pause(lora_send_timer);
+    // lv_timer_pause(lora_send_timer);
 }
 static void exit2(void) {
     ui_lora_sleep();

@@ -31,6 +31,9 @@ TouchDrvGT911 touch;
 
 SX1262 radio = new Module(LORA_CS, LORA_IRQ, LORA_RST, LORA_BUSY);
 int lora_mode = LORA_MODE_SEND;
+String lora_recv_data;
+bool lora_recv_success = false;
+int lora_recv_rssi = 0;
 
 // transmit 
 int transmissionState = RADIOLIB_ERR_NONE;
@@ -127,9 +130,6 @@ void eeprom_wr_wifi(const char *ssid, uint16_t ssid_len, const char *pwsd, uint1
     }
     EEPROM.commit();
 }
-
-
-#define DEBUG_INFO //
 
 void eeprom_init()
 {
@@ -324,23 +324,25 @@ void wifi_init(void)
 bool lora_init(void)
 {
     Serial.print(F("[SX1262] Initializing ... "));
-    int state= radio.begin();
+    int state = radio.begin();
     if (state == RADIOLIB_ERR_NONE) {
         Serial.println(F("success!"));
     } else {
         Serial.print(F("failed, code "));
         Serial.println(state);
-        return false;
+        while (true);
     }
 
+    radio.setPacketSentAction(set_transmit_flag);
+
     // set carrier frequency to 433.5 MHz
-    if (radio.setFrequency(433.5) == RADIOLIB_ERR_INVALID_FREQUENCY) {
+    if (radio.setFrequency(850.0) == RADIOLIB_ERR_INVALID_FREQUENCY) {
         Serial.println(F("Selected frequency is invalid for this module!"));
         while (true);
     }
 
     // set bandwidth to 250 kHz
-    if (radio.setBandwidth(250.0) == RADIOLIB_ERR_INVALID_BANDWIDTH) {
+    if (radio.setBandwidth(125.0) == RADIOLIB_ERR_INVALID_BANDWIDTH) {
         Serial.println(F("Selected bandwidth is invalid for this module!"));
         while (true);
     }
@@ -371,7 +373,7 @@ bool lora_init(void)
 
     // set over current protection limit to 80 mA (accepted range is 45 - 240 mA)
     // NOTE: set value to 0 to disable overcurrent protection
-    if (radio.setCurrentLimit(80) == RADIOLIB_ERR_INVALID_CURRENT_LIMIT) {
+    if (radio.setCurrentLimit(140) == RADIOLIB_ERR_INVALID_CURRENT_LIMIT) {
         Serial.println(F("Selected current limit is invalid for this module!"));
         while (true);
     }
@@ -407,10 +409,10 @@ bool lora_init(void)
 
     Serial.println(F("All settings succesfully changed!"));
 
-    radio.setPacketSentAction(set_transmit_flag);
+    
     Serial.println(F("[SX1262] Sending first packet ... "));
     transmissionState = radio.startTransmit("Hello World!");
-    radio.sleep();
+    // radio.sleep();
 
     return true;
 }
@@ -425,6 +427,12 @@ void lora_set_mode(int mode)
         radio.setPacketReceivedAction(set_receive_flag);
         Serial.println(F("[LORA] Starting to listen ... "));
         receivedState = radio.startReceive();
+        if (receivedState == RADIOLIB_ERR_NONE) {
+            Serial.println(F("success!"));
+        } else {
+            Serial.print(F("failed, code "));
+            Serial.println(receivedState);
+        }
     }
     lora_mode = mode;
 }
@@ -434,11 +442,23 @@ bool lora_receive(String *str)
     bool ret = false;
     if(receivedFlag){
         receivedFlag = false;
+
+        lora_recv_success = true;
+
         // String str;
-        receivedState = radio.readData(*str);
+        receivedState = radio.readData(lora_recv_data);
         if(receivedState == RADIOLIB_ERR_NONE){
+            Serial.println(F("[SX1262] Received packet!"));
+
             Serial.print(F("[SX1262] Data:\t\t"));
-            // Serial.println(str);
+            Serial.println(lora_recv_data.c_str());
+            // Serial.println("%d", (int)lora_recv_data.toInt());
+
+            Serial.print(F("[SX1262] RSSI:\t\t"));
+            Serial.print(radio.getRSSI());
+            lora_recv_rssi = (int) radio.getRSSI();
+            Serial.println(F(" dBm"));
+
             ret = true;
         }else{
             Serial.print(F("failed, code "));
@@ -474,9 +494,9 @@ void setup()
 {
     Serial.begin(115200);
 
-    eeprom_init();
+    // eeprom_init();
 
-    wifi_init();
+    // wifi_init();
     configTime(8 * 3600, 0, ntpServer1, ntpServer2);
 
     epd_init();
@@ -587,12 +607,26 @@ void setup()
     pinMode(BL_EN, OUTPUT);
     analogWrite(BL_EN, refr_backlight);
 
-    // get_curr_time(NULL);
+    pinMode(BOOT_BTN, INPUT);
+    pinMode(KEY_BTN, INPUT);
+
     get_curr_data_timer = lv_timer_create(get_curr_time, 5000, NULL);
 }
 
+int count = 0;
 void loop()
 {
     lv_task_handler();
     delay(1);
+
+    if(digitalRead(BOOT_BTN) == 0) {
+        Serial.println("BOOT BTN");
+    }
+    if(digitalRead(KEY_BTN) == 0) {
+        Serial.println("KEY BTN");
+    }
+
+    if(ui_if_epd_get_LORA_mode() == LORA_MODE_RECV) {
+        lora_receive(NULL);
+    }
 }

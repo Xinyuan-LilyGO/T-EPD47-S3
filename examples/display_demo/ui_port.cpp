@@ -53,6 +53,16 @@ void ui_if_epd_LORA_send(const char *str)
     lora_transmit(str);
 }
 
+void ui_lora_transmit(const char *str)
+{
+    lora_transmit(str);
+}
+
+bool ui_lora_recv(String *str)
+{
+    return lora_receive(str);
+}
+
 //************************************[ screen 3 ]****************************************** sd_card
 // void ui_if_epd_set_imgbtn(const char *text, int text_len, int type)
 // {

@@ -14,7 +14,7 @@
 
 
 ## :one:Product 🎁
-| Version |    v1.0 24-04-20    |
+| Version |    v1.0 24-08-10    |
 |:-------:|:-------------------:|
 |  module   |  ESP32-S3-WROOM-1   |
 |  Flash  |        16MB         |
@@ -42,11 +42,10 @@ If you are the first to use PlatformIO, you can try the following steps to insta
 7. Finally, click the :arrow_right:  button to download the program to Flash;
 
 
-
-
+<!-- 
 ## 🔴🟡🟢 Running effect drawing
 ![](./images/epd_clock.png)
 ![](./images/epd_lora.png)
 ![](./images/esp_sd.png)
 ![](./images/esp_test.png)
-![](./images/esp_wifi.png)
+![](./images/esp_wifi.png) -->

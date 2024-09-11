@@ -16,7 +16,6 @@
 #include <SPI.h>
 #include <SD.h>
 #include <EEPROM.h>
-#include "BQ25896.h"
 #include "bq27220.h"
 #include <XPowersLib.h>
 
@@ -34,8 +33,11 @@ extern bool bq27220_is_init;
 extern bool wifi_is_connect;
 extern bool home_btn_st;
 
+//
+extern TouchDrvGT911 touch;
+extern SX1262 radio;
+
 // sensor
-// extern BQ25896 battery_25896;
 extern BQ27220 bq27220;
 extern SensorPCF8563 rtc;
 extern TouchDrvGT911 touch;

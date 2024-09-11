@@ -1,6 +1,7 @@
 
 #include "ui.h"
 #include "display_demo.h"
+#include "esp_sleep.h"
 
 //
 bool sd_is_init = false;
@@ -330,7 +331,7 @@ bool lora_init(void)
     } else {
         Serial.print(F("failed, code "));
         Serial.println(state);
-        while (true);
+        return false;
     }
 
     radio.setPacketSentAction(set_transmit_flag);
@@ -492,6 +493,10 @@ void home_btn_event(void *user_data)
 
 void setup()
 {
+    gpio_hold_dis((gpio_num_t)TOUCH_RST);
+    gpio_hold_dis((gpio_num_t)LORA_RST);
+    gpio_deep_sleep_hold_dis();
+
     Serial.begin(115200);
 
     eeprom_init();
@@ -539,7 +544,7 @@ void setup()
         touch.setHomeButtonCallback(home_btn_event, NULL);
     }
 
-    // RTC --- 0x51
+    // RTC --- 0x51 
     Wire.beginTransmission(PCF8563_SLAVE_ADDRESS);
     if (Wire.endTransmission() == 0)
     {
@@ -610,6 +615,10 @@ void setup()
     pinMode(BOOT_BTN, INPUT);
     pinMode(KEY_BTN, INPUT);
 
+    pinMode(TOUCH_RST, OUTPUT);
+    pinMode(LORA_RST, OUTPUT);
+    
+
     get_curr_data_timer = lv_timer_create(get_curr_time, 5000, NULL);
 }
 
@@ -623,7 +632,29 @@ void loop()
         Serial.println("BOOT BTN");
     }
     if(digitalRead(KEY_BTN) == 0) {
-        Serial.println("KEY BTN");
+        Serial.println("KEY BTN SLEEP SLEEP SLEEP!!!");
+
+        touch.sleep();
+        radio.sleep();
+
+        digitalWrite(TOUCH_RST, LOW); 
+        digitalWrite(LORA_RST, LOW); 
+
+        pinMode(9, OUTPUT);
+        digitalWrite(9, LOW); 
+        
+        gpio_hold_en((gpio_num_t)TOUCH_RST);
+        gpio_hold_en((gpio_num_t)LORA_RST);
+        gpio_hold_en((gpio_num_t)9);
+        gpio_deep_sleep_hold_en();
+
+        analogWrite(BL_EN, 0);
+
+        epd_poweroff_all();
+
+        // esp_sleep_enable_ext0_wakeup((gpio_num_t)BOOT_BTN, 0);
+        esp_sleep_enable_ext1_wakeup((1UL << KEY_BTN), ESP_EXT1_WAKEUP_ANY_LOW); 
+        esp_deep_sleep_start();
     }
 
     if(ui_if_epd_get_LORA_mode() == LORA_MODE_RECV) {

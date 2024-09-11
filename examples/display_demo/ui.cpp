@@ -467,48 +467,51 @@ static void create2(lv_obj_t *parent) {
     // --------------- LEFT ---------------
     scr_middle_line(parent);
 
-    lora_lab_mode = scr2_create_label(scr2_cont);
-    int mode = ui_if_epd_get_LORA_mode();
-    if(mode == LORA_MODE_SEND ){
-        lv_label_set_text_fmt(lora_lab_mode, "%s : %s", "Mode", "send");
-    } else {
-        lv_label_set_text_fmt(lora_lab_mode, "%s : %s", "Mode", "recv");
-    }
+    if(ui_if_epd_get_LORA() == true) 
+    {
+        lora_lab_mode = scr2_create_label(scr2_cont);
+        int mode = ui_if_epd_get_LORA_mode();
+        if(mode == LORA_MODE_SEND ){
+            lv_label_set_text_fmt(lora_lab_mode, "%s : %s", "Mode", "send");
+        } else {
+            lv_label_set_text_fmt(lora_lab_mode, "%s : %s", "Mode", "recv");
+        }
 
-    lora_lab_time = scr2_create_label(scr2_cont);
-    lv_label_set_text_fmt(lora_lab_time, "%s : %ds", "SendTimeInterval", 5);
+        lora_lab_time = scr2_create_label(scr2_cont);
+        lv_label_set_text_fmt(lora_lab_time, "%s : %ds", "SendTimeInterval", 5);
 
-    label = scr2_create_label(scr2_cont);
-    lv_label_set_text_fmt(label, "%s : %0.1fMHz", "Frequency", 850.0);
+        label = scr2_create_label(scr2_cont);
+        lv_label_set_text_fmt(label, "%s : %0.1fMHz", "Frequency", 850.0);
 
-    label = scr2_create_label(scr2_cont);
-    lv_label_set_text_fmt(label, "%s : %0.1fKHz", "Bandwidth", 125.0);
+        label = scr2_create_label(scr2_cont);
+        lv_label_set_text_fmt(label, "%s : %0.1fKHz", "Bandwidth", 125.0);
 
-    label = scr2_create_label(scr2_cont);
-    lv_label_set_text_fmt(label, "%s : %d", "SpreadingFactor", 10);
+        label = scr2_create_label(scr2_cont);
+        lv_label_set_text_fmt(label, "%s : %d", "SpreadingFactor", 10);
 
-    label = scr2_create_label(scr2_cont);
-    lv_label_set_text_fmt(label, "%s : %d", "CodingRate", 6);
+        label = scr2_create_label(scr2_cont);
+        lv_label_set_text_fmt(label, "%s : %d", "CodingRate", 6);
 
-    label = scr2_create_label(scr2_cont);
-    lv_label_set_text_fmt(label, "%s : 0x%X", "SyncWord", 0xAB);
+        label = scr2_create_label(scr2_cont);
+        lv_label_set_text_fmt(label, "%s : 0x%X", "SyncWord", 0xAB);
 
-    label = scr2_create_label(scr2_cont);
-    lv_label_set_text_fmt(label, "%s : %d", "OutputPower", 10);
+        label = scr2_create_label(scr2_cont);
+        lv_label_set_text_fmt(label, "%s : %d", "OutputPower", 10);
 
-    label = scr2_create_label(scr2_cont);
-    lv_label_set_text_fmt(label, "%s : %d", "CurrentLimit", 140);
+        label = scr2_create_label(scr2_cont);
+        lv_label_set_text_fmt(label, "%s : %d", "CurrentLimit", 140);
 
-    label = scr2_create_label(scr2_cont);
-    lv_label_set_text_fmt(label, "%s : %d", "PreambleLength", 15);
-    
-    // --------------- RIGHT ---------------
-    lora_lab_buf[0] = scr2_create_label(scr2_cont_info);
-    // lv_obj_set_style_text_align(lora_lab_buf[0], LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    if(mode == LORA_MODE_SEND ){
-        ui_if_epd_set_LORA_mode(LORA_MODE_SEND);
-    } else {
-        lv_label_set_text(lora_lab_buf[0], "RECV:");
+        label = scr2_create_label(scr2_cont);
+        lv_label_set_text_fmt(label, "%s : %d", "PreambleLength", 15);
+        
+        // --------------- RIGHT ---------------
+        lora_lab_buf[0] = scr2_create_label(scr2_cont_info);
+        // lv_obj_set_style_text_align(lora_lab_buf[0], LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+        if(mode == LORA_MODE_SEND ){
+            ui_if_epd_set_LORA_mode(LORA_MODE_SEND);
+        } else {
+            lv_label_set_text(lora_lab_buf[0], "RECV:");
+        }
     }
 
     // back
@@ -520,13 +523,15 @@ static void entry2(void) {
     lora_lab_cnt = 1;
 
     lv_obj_align(lora_mode_sw, LV_ALIGN_TOP_MID, 0, 22);
-    // lv_obj_align(lora_open_sw, LV_ALIGN_BOTTOM_MID, 0, -22);
-
-    lora_send_timer = lv_timer_create(lora_send_timer_event, 5000, NULL);
-    // lv_timer_pause(lora_send_timer);
+    
+    if(ui_if_epd_get_LORA() == true)
+    {
+        lora_send_timer = lv_timer_create(lora_send_timer_event, 5000, NULL);
+    }
 }
 static void exit2(void) {
-    ui_lora_sleep();
+    if(ui_if_epd_get_LORA() == true)
+        ui_lora_sleep();
 }
 static void destroy2(void) {
     if(lora_send_timer) {

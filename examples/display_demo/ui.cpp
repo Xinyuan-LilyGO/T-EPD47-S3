@@ -509,6 +509,7 @@ static void create2(lv_obj_t *parent) {
         // lv_obj_set_style_text_align(lora_lab_buf[0], LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
         if(mode == LORA_MODE_SEND ){
             ui_if_epd_set_LORA_mode(LORA_MODE_SEND);
+            lv_label_set_text(lora_lab_buf[0], "SEND:");
         } else {
             lv_label_set_text(lora_lab_buf[0], "RECV:");
         }

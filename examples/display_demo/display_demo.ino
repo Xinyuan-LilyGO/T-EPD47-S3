@@ -506,13 +506,18 @@ void setup()
 
     epd_init();
 
-    // SD
     SPI.begin(BOARD_SPI_SCLK, BOARD_SPI_MISO, BOARD_SPI_MOSI);
+
+    // SD
     sd_is_init = SD.begin(SD_CS);
 
     // LORA
     lora_is_init = lora_init();
-    
+    if(lora_is_init == false) {
+        SPI.end();
+        SPI.begin(BOARD_SPI_SCLK, BOARD_SPI_MISO, BOARD_SPI_MOSI);
+    }
+
     // I2C Scan
     /**
      * 0x51 --- RTC

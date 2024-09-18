@@ -367,7 +367,7 @@ bool lora_init(void)
     }
 
     // set output power to 10 dBm (accepted range is -17 - 22 dBm)
-    if (radio.setOutputPower(10) == RADIOLIB_ERR_INVALID_OUTPUT_POWER) {
+    if (radio.setOutputPower(22) == RADIOLIB_ERR_INVALID_OUTPUT_POWER) {
         Serial.println(F("Selected output power is invalid for this module!"));
         while (true);
     }
